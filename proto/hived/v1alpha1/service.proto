@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "hived/v1alpha1/agent.proto";
+import "hived/v1alpha1/colony.proto";
+import "hived/v1alpha1/event.proto";
+import "hived/v1alpha1/meta.proto";
+import "hived/v1alpha1/run.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+// --- Colony ---
+
+message ApplyColonyRequest {
+  Colony object = 1;
+  // IfResourceVersion enables optimistic concurrency: if set and the stored
+  // resource_version does not match, Apply is rejected with CodeAborted.
+  optional int64 if_resource_version = 2;
+}
+
+message GetColonyRequest {
+  string name = 1;
+}
+
+message ListColoniesRequest {
+  ListOptions options = 1;
+}
+
+message ListColoniesResponse {
+  repeated Colony items = 1;
+  ListMeta list_meta = 2;
+}
+
+message WatchColoniesRequest {
+  ListOptions options = 1;
+  int64 since_resource_version = 2;
+}
+
+message ColonyWatchEvent {
+  WatchEventType type = 1;
+  int64 resource_version = 2;
+  Colony object = 3;
+}
+
+service ColonyService {
+  rpc Apply(ApplyColonyRequest) returns (Colony);
+  rpc Get(GetColonyRequest) returns (Colony);
+  rpc List(ListColoniesRequest) returns (ListColoniesResponse);
+  rpc Watch(WatchColoniesRequest) returns (stream ColonyWatchEvent);
+}
+
+// --- Agent ---
+
+message ApplyAgentRequest {
+  Agent object = 1;
+  optional int64 if_resource_version = 2;
+}
+
+message GetAgentRequest {
+  string colony = 1;
+  string name = 2;
+}
+
+message ListAgentsRequest {
+  ListOptions options = 1;
+}
+
+message ListAgentsResponse {
+  repeated Agent items = 1;
+  ListMeta list_meta = 2;
+}
+
+message WatchAgentsRequest {
+  ListOptions options = 1;
+  int64 since_resource_version = 2;
+}
+
+message AgentWatchEvent {
+  WatchEventType type = 1;
+  int64 resource_version = 2;
+  Agent object = 3;
+}
+
+service AgentService {
+  rpc Apply(ApplyAgentRequest) returns (Agent);
+  rpc Get(GetAgentRequest) returns (Agent);
+  rpc List(ListAgentsRequest) returns (ListAgentsResponse);
+  rpc Watch(WatchAgentsRequest) returns (stream AgentWatchEvent);
+}
+
+// --- AgentVersion ---
+
+message ApplyAgentVersionRequest {
+  AgentVersion object = 1;
+  optional int64 if_resource_version = 2;
+}
+
+message GetAgentVersionRequest {
+  string colony = 1;
+  string name = 2;
+}
+
+message ListAgentVersionsRequest {
+  ListOptions options = 1;
+}
+
+message ListAgentVersionsResponse {
+  repeated AgentVersion items = 1;
+  ListMeta list_meta = 2;
+}
+
+message WatchAgentVersionsRequest {
+  ListOptions options = 1;
+  int64 since_resource_version = 2;
+}
+
+message AgentVersionWatchEvent {
+  WatchEventType type = 1;
+  int64 resource_version = 2;
+  AgentVersion object = 3;
+}
+
+service AgentVersionService {
+  // Apply is create-or-identical-noop only: an update whose spec differs
+  // from an existing (colony, name) is rejected as immutable.
+  rpc Apply(ApplyAgentVersionRequest) returns (AgentVersion);
+  rpc Get(GetAgentVersionRequest) returns (AgentVersion);
+  rpc List(ListAgentVersionsRequest) returns (ListAgentVersionsResponse);
+  rpc Watch(WatchAgentVersionsRequest) returns (stream AgentVersionWatchEvent);
+}
+
+// --- Run ---
+
+message ApplyRunRequest {
+  Run object = 1;
+  optional int64 if_resource_version = 2;
+}
+
+message GetRunRequest {
+  string colony = 1;
+  string name = 2;
+}
+
+message ListRunsRequest {
+  ListOptions options = 1;
+}
+
+message ListRunsResponse {
+  repeated Run items = 1;
+  ListMeta list_meta = 2;
+}
+
+message WatchRunsRequest {
+  ListOptions options = 1;
+  int64 since_resource_version = 2;
+}
+
+message RunWatchEvent {
+  WatchEventType type = 1;
+  int64 resource_version = 2;
+  Run object = 3;
+}
+
+service RunService {
+  // Apply persists the Run as RUN_PHASE_PENDING. Nothing schedules it in
+  // M0 — there is no Scheduler until M1.
+  rpc Apply(ApplyRunRequest) returns (Run);
+  rpc Get(GetRunRequest) returns (Run);
+  rpc List(ListRunsRequest) returns (ListRunsResponse);
+  rpc Watch(WatchRunsRequest) returns (stream RunWatchEvent);
+}
+
+// --- Event ---
+
+message AppendEventRequest {
+  Event object = 1;
+}
+
+message ListEventsRequest {
+  string colony = 1;
+  string run = 2;
+  int64 since_seq = 3;
+  int32 limit = 4;
+}
+
+message ListEventsResponse {
+  repeated Event items = 1;
+}
+
+message WatchEventsRequest {
+  string colony = 1;
+  string run = 2;
+  int64 since_resource_version = 3;
+}
+
+service EventService {
+  // Append-only: no Apply, no Get, no update, no delete.
+  rpc Append(AppendEventRequest) returns (Event);
+  rpc List(ListEventsRequest) returns (ListEventsResponse);
+  rpc Watch(WatchEventsRequest) returns (stream Event);
+}

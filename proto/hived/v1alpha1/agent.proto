@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "google/protobuf/duration.proto";
+import "hived/v1alpha1/meta.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+// Agent is the mutable envelope around a versioned agent definition. The
+// real spec (instructions, model, tools, ...) lives on AgentVersion, which
+// is immutable per version; Agent.status.current points at the active one.
+message Agent {
+  ObjectMeta metadata = 1;
+  AgentSpec spec = 2;
+  AgentStatus status = 3;
+}
+
+message AgentSpec {
+  string description = 1;
+}
+
+message AgentStatus {
+  // Current is the name of the active AgentVersion. Set explicitly via the
+  // status subresource in M0 — there is no controller yet to set it
+  // automatically.
+  string current = 1;
+  repeated string versions = 2;
+  repeated Condition conditions = 3;
+}
+
+message ModelSpec {
+  string provider = 1;
+  string name = 2;
+  map<string, string> params = 3;
+}
+
+message ToolRef {
+  string name = 1;
+  string version = 2;
+  map<string, string> config = 3;
+}
+
+message MemorySpec {
+  string root = 1;
+  repeated string blocks = 2;
+}
+
+message RuntimeSpec {
+  // Executor is a hint, not a binding assignment — see ADR-0003.
+  string executor = 1;
+  string image = 2;
+  map<string, string> env = 3;
+}
+
+message LimitsSpec {
+  int64 max_steps = 1;
+  int64 max_tokens = 2;
+  string max_cost = 3;
+  google.protobuf.Duration timeout = 4;
+}
+
+message IOSpec {
+  // JSON Schema, stored as a string in M0.
+  string input_schema = 1;
+  string output_schema = 2;
+}
+
+// AgentVersion is a sub-resource of Agent. Its spec is immutable after
+// creation: re-applying an identical spec is a no-op success; applying a
+// different spec to an existing (colony, name) is rejected.
+message AgentVersion {
+  ObjectMeta metadata = 1;
+  AgentVersionSpec spec = 2;
+  AgentVersionStatus status = 3;
+}
+
+message AgentVersionSpec {
+  string agent = 1;
+  string version = 2;
+  string instructions = 3;
+  ModelSpec model = 4;
+  repeated ToolRef tools = 5;
+  MemorySpec memory = 6;
+  repeated string policies = 7;
+  RuntimeSpec runtime = 8;
+  LimitsSpec limits = 9;
+  IOSpec io = 10;
+}
+
+message AgentVersionStatus {
+  repeated Condition conditions = 1;
+}

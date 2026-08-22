@@ -1,0 +1,35 @@
+version: "2"
+run:
+  timeout: 3m
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+  settings:
+    gosec:
+      excludes:
+        # G115 (integer overflow on conversions) is too noisy here: the flagged
+        # sites are bounded len()/seq/limit conversions that cannot overflow
+        # in practice. Site-specific gosec risks are annotated with //nosec.
+        - G115
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - gosec
+          - errcheck
+      - path: gen/
+        linters:
+          - all
+
+# No gofumpt formatter here on purpose. golangci-lint bundles its own gofumpt
+# build whose output can drift from the standalone `gofumpt` binary, which
+# would make CI red on tool-version differences rather than real issues.
+# Formatting stays a dev-workflow convention (`gofumpt -w` on changed files).

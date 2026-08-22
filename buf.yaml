@@ -1,0 +1,19 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  except:
+    # hiveD's Apply/Get RPCs return the resource type directly (Colony,
+    # Agent, Run, ...), Kubernetes-API style, rather than a
+    # per-RPC *Response wrapper message — and the same resource type is
+    # necessarily the response of more than one RPC (Apply and Get both
+    # return Colony, for instance). This is a deliberate, fixed convention
+    # across every service in this proto package, not an oversight.
+    - RPC_REQUEST_STANDARD_NAME
+    - RPC_RESPONSE_STANDARD_NAME
+    - RPC_REQUEST_RESPONSE_UNIQUE
+breaking:
+  use:
+    - FILE

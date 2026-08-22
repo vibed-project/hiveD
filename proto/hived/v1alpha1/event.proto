@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+// Event is append-only and per-Run. It deliberately does not embed
+// ObjectMeta and has no spec/status split — it is not a reconciled
+// resource, it is a fact that happened.
+message Event {
+  string colony = 1;
+  string run = 2;
+  // Seq is monotonic per (colony, run), assigned by the store on Append.
+  int64 seq = 3;
+  string type = 4;
+  google.protobuf.Timestamp ts = 5;
+  google.protobuf.Struct payload = 6;
+  // ResourceVersion shares the same sequence space as resources' watch
+  // cursor, so a single cursor orders both. See internal/store.
+  int64 resource_version = 7;
+}

@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "hived/v1alpha1/meta.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+// Colony is hive-scoped: the tenant / isolation boundary. It owns agents,
+// policies, quotas, tool registrations, and a memory scope root.
+message Colony {
+  ObjectMeta metadata = 1;
+  ColonySpec spec = 2;
+  ColonyStatus status = 3;
+}
+
+message Quotas {
+  int64 max_concurrent_runs = 1;
+  int64 max_runs_per_hour = 2;
+  int64 token_budget = 3;
+  // CostBudget is a decimal string (e.g. "12.50"), never a float, to avoid
+  // floating-point drift in budget accounting.
+  string cost_budget = 4;
+}
+
+message ColonySpec {
+  string display_name = 1;
+  Quotas quotas = 2;
+  // Policies are names of Policy resources evaluated for Runs in this
+  // Colony. Policy is not implemented in M0; this field is accepted and
+  // stored but not yet enforced.
+  repeated string policies = 3;
+  // MemoryRoot is the mindD path root this Colony's Runs are scoped under.
+  // See ADR-0004 for the interim mapping onto mindD's tenant claim.
+  string memory_root = 4;
+  repeated string executor_allowlist = 5;
+  repeated string model_allowlist = 6;
+}
+
+message ColonyStatus {
+  repeated Condition conditions = 1;
+  int64 observed_generation = 2;
+}

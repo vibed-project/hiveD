@@ -1,0 +1,68 @@
+GO      := ./scripts/go-in-podman.sh go
+COMPOSE := podman compose -f deploy/compose/docker-compose.yaml
+
+.PHONY: build build-cli build-all
+build:
+	$(GO) build -o bin/hived-keeper ./cmd/keeper
+
+build-cli:
+	$(GO) build -o bin/hived ./cmd/hived
+
+build-all: build build-cli
+
+.PHONY: test test-race test-integration
+test:
+	$(GO) test ./... -short -count=1
+
+test-race:
+	CGO_ENABLED=1 $(GO) test -race -short -count=1 ./internal/...
+
+test-integration:
+	$(GO) test -tags=integration -count=1 ./internal/store/...
+
+.PHONY: lint boundary
+lint: boundary
+	$(GO) run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 run ./...
+
+boundary:
+	./scripts/check-import-boundary.sh
+
+.PHONY: proto proto-lint proto-check
+proto:
+	buf generate
+
+proto-lint:
+	buf lint
+	buf format --diff --exit-code
+
+proto-check: proto
+	git diff --exit-code gen/
+
+.PHONY: tidy
+tidy:
+	$(GO) mod tidy
+
+.PHONY: image
+image:
+	podman build -t localhost/hived:dev .
+
+.PHONY: compose-up compose-down compose-logs
+compose-up:
+	$(COMPOSE) up -d --build
+
+compose-down:
+	$(COMPOSE) down -v
+
+compose-logs:
+	$(COMPOSE) logs -f
+
+.PHONY: migrate-up migrate-status
+migrate-up:
+	./bin/hived-keeper migrate up
+
+migrate-status:
+	./bin/hived-keeper migrate status
+
+.PHONY: clean
+clean:
+	rm -rf bin/

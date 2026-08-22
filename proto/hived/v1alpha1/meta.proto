@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+// ObjectMeta is embedded in every resource kind that follows spec/status
+// conventions (Colony, Agent, AgentVersion, Run). Event does not embed it —
+// Event is append-only and has no spec/status.
+message ObjectMeta {
+  // Name is unique within (kind, colony). Immutable after creation.
+  string name = 1;
+  // Colony this resource belongs to. Empty for Colony itself (hive-scoped).
+  string colony = 2;
+  // Uid is a server-assigned identifier, stable across renames (renames are
+  // not supported in M0, but the field exists for forward compatibility).
+  string uid = 3;
+  // Generation increments only when spec changes. Status-only writes leave
+  // it unchanged, so status.observed_generation is meaningful once
+  // controllers exist.
+  int64 generation = 4;
+  // ResourceVersion increments on every write (spec or status) and is the
+  // watch cursor. Also used for optimistic concurrency via
+  // if_resource_version on Apply.
+  int64 resource_version = 5;
+  map<string, string> labels = 6;
+  map<string, string> annotations = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+  // DeletedAt is set on soft delete; a Watch stream emits a DELETED event
+  // when this transitions from unset to set.
+  google.protobuf.Timestamp deleted_at = 10;
+}
+
+// Condition is a standard status building block, following the
+// type/status/reason/message shape used across the resource model.
+message Condition {
+  string type = 1;
+  string status = 2;
+  string reason = 3;
+  string message = 4;
+  google.protobuf.Timestamp last_transition_time = 5;
+  int64 observed_generation = 6;
+}
+
+message ListOptions {
+  // Colony scopes the list; required for colony-scoped kinds, ignored for
+  // Colony itself.
+  string colony = 1;
+  map<string, string> label_selector = 2;
+  int32 page_size = 3;
+  string page_token = 4;
+}
+
+message ListMeta {
+  string next_page_token = 1;
+  // ResourceVersion is the highest resource_version observed in this list
+  // response. A client can List then Watch(since=resource_version) without
+  // missing or double-processing an event.
+  int64 resource_version = 2;
+}
+
+// WatchEvent.Type mirrors Kubernetes' watch semantics.
+enum WatchEventType {
+  WATCH_EVENT_TYPE_UNSPECIFIED = 0;
+  WATCH_EVENT_TYPE_ADDED = 1;
+  WATCH_EVENT_TYPE_MODIFIED = 2;
+  WATCH_EVENT_TYPE_DELETED = 3;
+  // BOOKMARK carries no object change; it only advances resource_version so
+  // an idle watcher can checkpoint without a real event.
+  WATCH_EVENT_TYPE_BOOKMARK = 4;
+}

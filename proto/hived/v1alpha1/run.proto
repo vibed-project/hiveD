@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "hived/v1alpha1/meta.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+enum RunPhase {
+  RUN_PHASE_UNSPECIFIED = 0;
+  RUN_PHASE_PENDING = 1;
+  RUN_PHASE_SCHEDULING = 2;
+  RUN_PHASE_RUNNING = 3;
+  RUN_PHASE_PAUSED = 4;
+  RUN_PHASE_SUCCEEDED = 5;
+  RUN_PHASE_FAILED = 6;
+  RUN_PHASE_CANCELLED = 7;
+}
+
+message TokenUsage {
+  int64 input = 1;
+  int64 output = 2;
+  int64 total = 3;
+}
+
+// Run is a single instance ("Worker") of an Agent. In M0, RunService.Apply
+// persists a Run in RUN_PHASE_PENDING and nothing schedules it — there is
+// no Scheduler until M1.
+message Run {
+  ObjectMeta metadata = 1;
+  RunSpec spec = 2;
+  RunStatus status = 3;
+}
+
+message RunSpec {
+  string agent_ref = 1;
+  string version = 2;
+  google.protobuf.Struct input = 3;
+  string session_ref = 4;
+  string parent_run_ref = 5;
+  // ExecutorHint maps to an Executor's lane, per ADR-0003. Not consumed by
+  // anything in M0; the field exists so M2's vibeD Executor doesn't need a
+  // breaking proto change.
+  string executor_hint = 6;
+}
+
+message RunStatus {
+  RunPhase phase = 1;
+  string cell_ref = 2;
+  string executor = 3;
+  // Identity is an opaque reference to the Run's issued token. Unpopulated
+  // in M0 — see ADR-0002; internal/identity is a stub until M1.
+  string identity = 4;
+  google.protobuf.Timestamp started_at = 5;
+  google.protobuf.Timestamp finished_at = 6;
+  int64 steps = 7;
+  TokenUsage tokens = 8;
+  string cost = 9;
+  string checkpoint = 10;
+  google.protobuf.Struct result = 11;
+  string message = 12;
+  repeated Condition conditions = 13;
+}

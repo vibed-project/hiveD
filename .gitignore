@@ -1,0 +1,39 @@
+# Binaries
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go
+*.test
+*.out
+vendor/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# hiveD
+/hived
+/hived-keeper
+/hived-drone
+hived-dev.yaml
+/data/
+
+# Environment
+.env
+.env.local
+
+# Local Go build/module cache (podman toolchain, see scripts/go-in-podman.sh)
+/.gocache/
+/.gomodcache/
+/.gotools/
