@@ -108,9 +108,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Compute image tags
         id: tags
+        env:
+          OWNER: ${{ github.repository_owner }}
         run: |
-          echo "sha_tag=ghcr.io/hived-project/hived-keeper:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-          echo "latest_tag=ghcr.io/hived-project/hived-keeper:latest" >> "$GITHUB_OUTPUT"
+          image="ghcr.io/${OWNER,,}/hived-keeper"
+          echo "sha_tag=${image}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+          echo "latest_tag=${image}:latest" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: .
