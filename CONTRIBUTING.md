@@ -51,7 +51,8 @@ make boundary  # ./scripts/check-import-boundary.sh only
 
 `make lint` runs `make boundary`, which asserts this module stays
 self-contained: it must never import a sibling `github.com/vibed-project/*`
-module or `memsidecar` (mindD) directly. Those integrations go
+module directly — mindD included, since it is now
+`github.com/vibed-project/mindD`. Those integrations go
 through interfaces and generated clients, not cross-module Go imports — see
 [docs/adr/ADR-0004-mind-memory-usage.md](docs/adr/ADR-0004-mind-memory-usage.md)
 for why.

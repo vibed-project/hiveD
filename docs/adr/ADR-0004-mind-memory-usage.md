@@ -23,9 +23,9 @@ token to a hierarchical path like `colony/<c>/agent/<a>/run/<r>` and
   config (`NamespaceConfig{Block, Name, Backend, ...}`), not created
   dynamically by a client. mindD has no native concept of a "run" at all.
 - mindD exposes **no importable Go SDK package**. The only Go client code
-  in that repo is `cmd/memctl/dataplane.go`, which lives inside mindD's
+  in that repo is `cmd/mindctl/dataplane.go`, which lives inside mindD's
   own module and imports its generated protobuf/connect stubs directly
-  (`memsidecar/gen/memsidecar/{kv,episodic,semantic,artifact,lease}/v1`).
+  (`github.com/vibed-project/mindD/gen/mindd/{kv,episodic,semantic,artifact,lease}/v1`).
   A hiveD Go client would need to either import those generated packages
   directly (which the import-boundary check in `scripts/check-import-boundary.sh`
   currently forbids by design — see ADR-0001) or hand-write its own thin
@@ -116,7 +116,7 @@ Status when mindD's maintainers respond.
   working integration.
 - M1's mindD client will be hand-written against mindD's public
   connect-go stubs (imported as a separate dependency, not via
-  `memsidecar/gen/...` inside mindD's own module tree) or generated from
+  `github.com/vibed-project/mindD/gen/...` inside mindD's own module tree) or generated from
   mindD's published proto, whichever is cleaner once M1 scopes that work
   — this ADR does not decide that mechanism, only the claim/path mapping.
 - The `run/<runID>/` key-prefix convention is designed so the **key

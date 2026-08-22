@@ -6,7 +6,7 @@ Draft
 ## Context
 
 hiveD sits alongside two sibling repositories in this ecosystem — vibeD
-(sandbox execution) and mindD/MemorySidecar (durable memory) — and needs a
+(sandbox execution) and mindD (durable memory) — and needs a
 written boundary for what it is and is not, before any code makes that
 boundary implicit and hard to change. Agent frameworks (CrewAI, LangGraph,
 ADK, the OpenAI/Anthropic SDKs) already solve the in-process problem of

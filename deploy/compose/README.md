@@ -21,7 +21,7 @@ curl localhost:9090/metrics
 
 ## The `mind` profile
 
-There is no real mindD (MemorySidecar) integration in M0 — see
+There is no real mindD integration in M0 — see
 [docs/adr/ADR-0004](../../docs/adr/ADR-0004-mind-memory-usage.md). The
 `mind` service in `docker-compose.yaml` is a placeholder documenting the
 eventual integration point, gated behind a compose profile so it is never
@@ -31,7 +31,7 @@ required for a clean `make compose-up`:
 podman compose -f deploy/compose/docker-compose.yaml --profile mind up -d
 ```
 
-This builds mindD from a sibling checkout at `../../../MemorySidecar`
+This builds mindD from a sibling checkout at `../../../mindD`
 (mindD publishes no container image of its own), so it only works if you
 have that repository cloned next to `hiveD/`. If you don't, that's fine —
 you don't need the `mind` profile for anything in M0.

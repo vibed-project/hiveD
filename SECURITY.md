@@ -66,7 +66,7 @@ M0.
 
 ### Memory scoping
 
-hiveD delegates durable memory to mindD (MemorySidecar). ADR-0004 records a
+hiveD delegates durable memory to mindD. ADR-0004 records a
 known gap: mindD's capability tokens today scope by a flat tenant string
 plus admin-predeclared namespace globs, not by hiveD's `run`-level path
 scheme — until that is resolved, a compromised Run token can reach sibling
@@ -75,7 +75,8 @@ Runs' memory within the same colony. No mindD integration ships in M0.
 ### Cross-repository boundary
 
 This module's `scripts/check-import-boundary.sh` (run in CI) asserts it
-never imports `github.com/vibed-project/*` or `memsidecar` directly, so its
+never imports `github.com/vibed-project/*` directly — which now covers mindD
+(`github.com/vibed-project/mindD`) — so its
 security posture does not implicitly depend on a sibling repository's
 internals.
 
