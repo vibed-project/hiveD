@@ -11,7 +11,7 @@ profile-gated placeholder service, not a live integration.
 `docs/PROJECT.md` §9 assumes hiveD can scope a Run's mindD capability
 token to a hierarchical path like `colony/<c>/agent/<a>/run/<r>` and
 `colony/<c>/session/<s>`. Checking that assumption against mindD
-(MemorySidecar) as it actually exists today surfaced a real gap:
+(formerly MemorySidecar) as it actually exists today surfaced a real gap:
 
 - mindD's PASETO v4 capability scope (`internal/auth`, `IssuePASETO`) is
   `{tenant string (required), agent string (optional), namespaces
@@ -42,9 +42,14 @@ Until (if ever) mindD grows hierarchical/dynamic namespace scoping, hiveD
 maps its model onto mindD's existing flat one as follows:
 
 - **Colony → mindD's `tenant` claim.** `tenant = "<colony>"`. This is the
-  isolation boundary mindD actually enforces today (`QualifyNamespace`/
+  isolation boundary mindD can enforce today (`QualifyNamespace`/
   `StorageTenant` prefix storage by `tenant`), so it is the right anchor
-  for hiveD's coarsest isolation unit too.
+  for hiveD's coarsest isolation unit too. **That enforcement is opt-in**:
+  mindD only partitions storage by tenant when its server config sets
+  `tenant_isolation: true`; with the default `false`, every tenant shares
+  one partition and the `tenant` claim is not an isolation boundary at
+  all. Any mindD instance hiveD talks to must run with
+  `tenant_isolation: true`, and hiveD's compose/Helm deployments set it.
 - **Agent → mindD's optional `agent` claim**, when per-agent isolation
   within a colony is needed, rather than folding it into `tenant` as a
   compound string. This uses the field mindD already defines for this
@@ -90,9 +95,17 @@ sibling projects by name; the same boundary applies here in reverse (a
 private/internal-facing project referencing mindD in a public-facing
 mindD artifact).
 
-Filing the issue is a **manual action, not a code artifact** — it is not
-part of any M0 deliverable. Once filed, record the issue link here and
-update this ADR's Status when mindD's maintainers respond.
+**Filed 2026-08-22 as
+[mindD#64](https://github.com/vibed-project/mindD/issues/64):**
+"Key-prefix scoping for capability tokens". It proposes an optional
+`KeyPrefix []string` on the capability scope (claim `key_prefixes`),
+enforced next to `PermitsNamespace`: empty keeps today's behaviour
+byte-for-byte; non-empty confines every op's key (kv key, episodic
+session id, artifact id, lease name, semantic document id) to a listed
+prefix, with Range/List/Search clipped rather than rejected. Hierarchy
+falls out of plain prefixes, which is exactly what the `run/<runID>/`
+convention in (a) needs to become a real boundary. Update this ADR's
+Status when mindD's maintainers respond.
 
 ## Consequences
 
