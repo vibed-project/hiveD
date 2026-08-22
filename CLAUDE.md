@@ -52,7 +52,7 @@ before adding scope, and update this section when the milestone advances.
   version is rejected.
 - Events are append-only — no update, no delete.
 - This module stays self-contained: no imports of sibling
-  `github.com/vibed-project/*` modules or `memsidecar` (mindD). Enforced by
+  `github.com/vibed-project/*` modules, which now includes mindD. Enforced by
   `scripts/check-import-boundary.sh` in CI (`make boundary`). Cross-repo
   integration goes through an interface + generated client, never a direct
   module import.

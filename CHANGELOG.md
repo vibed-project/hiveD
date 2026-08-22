@@ -27,7 +27,7 @@ hiveD is pre-1.0; no version has been tagged yet.
   wired to a live Keeper; `logs` and `approve` exit non-zero with an
   explicit "not implemented until M1" message.
 - `deploy/compose/docker-compose.yaml`: Keeper + Postgres by default; a
-  mindD (MemorySidecar) placeholder service gated behind the `mind` compose
+  mindD placeholder service gated behind the `mind` compose
   profile, not required for a clean `up`.
 - CI (`.github/workflows/ci.yaml`): build, race, import-boundary, proto
   drift, lint, store-integration, and (main-only) container jobs.

@@ -41,9 +41,9 @@ services:
       timeout: 3s
       retries: 5
 
-  # Placeholder only, not started by default. mindD (MemorySidecar) publishes
+  # Placeholder only, not started by default. mindD publishes
   # no container image of its own, so this service builds from a sibling
-  # checkout at ../../../MemorySidecar — it will fail to build unless you
+  # checkout at ../../../mindD — it will fail to build unless you
   # have that repo cloned next to hiveD, which is expected: this profile
   # exists to document the eventual integration point, not to work out of
   # the box on a standalone `git clone` of hiveD. See docs/adr/ADR-0004:
@@ -51,10 +51,10 @@ services:
   # the critical path for `make compose-up`.
   mind:
     build:
-      context: ../../../MemorySidecar
+      context: ../../../mindD
     profiles: ["mind"]
     environment:
-      MEMSIDECAR_PG_DSN: "postgres://memsidecar:memsidecar@postgres:5432/memsidecar?sslmode=disable"
+      MINDD_PG_DSN: "postgres://mindd:mindd@postgres:5432/mindd?sslmode=disable"
     ports:
       - "7777:7777" # gRPC
       - "8081:8080" # HTTP/JSON gateway (offset from Keeper's 8080)
