@@ -2,11 +2,13 @@ syntax = "proto3";
 
 package hived.v1alpha1;
 
+import "google/protobuf/timestamp.proto";
 import "hived/v1alpha1/agent.proto";
 import "hived/v1alpha1/colony.proto";
 import "hived/v1alpha1/event.proto";
 import "hived/v1alpha1/meta.proto";
 import "hived/v1alpha1/run.proto";
+import "hived/v1alpha1/tool.proto";
 
 option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
 
@@ -162,13 +164,74 @@ message RunWatchEvent {
   Run object = 3;
 }
 
+message RunLogsRequest {
+  string colony = 1;
+  string name = 2;
+  // Follow keeps the stream open across Cell replacements until the Run is
+  // terminal.
+  bool follow = 3;
+  google.protobuf.Timestamp since = 4;
+}
+
+message RunLogChunk {
+  google.protobuf.Timestamp ts = 1;
+  // Stream is "stdout" or "stderr".
+  string stream = 2;
+  bytes data = 3;
+  // CellRef identifies which Cell incarnation produced this chunk; it
+  // changes when the Scheduler re-provisions after a lost Cell.
+  string cell_ref = 4;
+}
+
 service RunService {
-  // Apply persists the Run as RUN_PHASE_PENDING. Nothing schedules it in
-  // M0 — there is no Scheduler until M1.
+  // Apply persists the Run as RUN_PHASE_PENDING; the Scheduler owns every
+  // later phase transition.
   rpc Apply(ApplyRunRequest) returns (Run);
   rpc Get(GetRunRequest) returns (Run);
   rpc List(ListRunsRequest) returns (ListRunsResponse);
   rpc Watch(WatchRunsRequest) returns (stream RunWatchEvent);
+  // Logs streams the Run's Cell output via the Executor. Returns
+  // CodeUnimplemented until the Executor and Scheduler exist.
+  rpc Logs(RunLogsRequest) returns (stream RunLogChunk);
+}
+
+// --- Tool ---
+
+message ApplyToolRequest {
+  Tool object = 1;
+  optional int64 if_resource_version = 2;
+}
+
+message GetToolRequest {
+  string colony = 1;
+  string name = 2;
+}
+
+message ListToolsRequest {
+  ListOptions options = 1;
+}
+
+message ListToolsResponse {
+  repeated Tool items = 1;
+  ListMeta list_meta = 2;
+}
+
+message WatchToolsRequest {
+  ListOptions options = 1;
+  int64 since_resource_version = 2;
+}
+
+message ToolWatchEvent {
+  WatchEventType type = 1;
+  int64 resource_version = 2;
+  Tool object = 3;
+}
+
+service ToolService {
+  rpc Apply(ApplyToolRequest) returns (Tool);
+  rpc Get(GetToolRequest) returns (Tool);
+  rpc List(ListToolsRequest) returns (ListToolsResponse);
+  rpc Watch(WatchToolsRequest) returns (stream ToolWatchEvent);
 }
 
 // --- Event ---

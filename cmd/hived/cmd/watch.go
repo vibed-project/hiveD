@@ -92,6 +92,21 @@ func watchKind(ctx context.Context, kind string, since int64) error {
 		}
 		return stream.Err()
 
+	case "Tool":
+		stream, err := toolClient().Watch(ctx, connect.NewRequest(&v1alpha1.WatchToolsRequest{Options: opts, SinceResourceVersion: since}))
+		if err != nil {
+			return err
+		}
+		for stream.Receive() {
+			ev := stream.Msg()
+			name := ""
+			if ev.Object != nil {
+				name = ev.Object.Metadata.Colony + "/" + ev.Object.Metadata.Name
+			}
+			fmt.Printf("%s\t%d\t%s\n", ev.Type, ev.ResourceVersion, name)
+		}
+		return stream.Err()
+
 	default:
 		return fmt.Errorf("unknown kind %q", kind)
 	}

@@ -17,8 +17,8 @@ import (
 // database pool is reachable). Returning an error fails /readyz.
 type ReadyFunc func(ctx context.Context) error
 
-// NewHandler builds the Keeper's API mux: the five connect-go services
-// plus /healthz and /readyz. /metrics is intentionally not mounted here —
+// NewHandler builds the Keeper's API mux: the six resource connect-go
+// services plus /healthz and /readyz. /metrics is intentionally not mounted here —
 // see internal/obs and cmd/keeper, which serve it on a separate port so
 // scraping never shares a listener with application traffic.
 //
@@ -33,6 +33,7 @@ func NewHandler(rs store.ResourceStore, es store.EventStore, verifier identity.V
 	mux.Handle(v1alpha1connect.NewAgentServiceHandler(NewAgentHandler(rs), interceptor))
 	mux.Handle(v1alpha1connect.NewAgentVersionServiceHandler(NewAgentVersionHandler(rs), interceptor))
 	mux.Handle(v1alpha1connect.NewRunServiceHandler(NewRunHandler(rs), interceptor))
+	mux.Handle(v1alpha1connect.NewToolServiceHandler(NewToolHandler(rs), interceptor))
 	mux.Handle(v1alpha1connect.NewEventServiceHandler(NewEventHandler(es), interceptor))
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {

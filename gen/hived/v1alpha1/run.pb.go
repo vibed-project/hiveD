@@ -34,6 +34,10 @@ const (
 	RunPhase_RUN_PHASE_SUCCEEDED   RunPhase = 5
 	RunPhase_RUN_PHASE_FAILED      RunPhase = 6
 	RunPhase_RUN_PHASE_CANCELLED   RunPhase = 7
+	// TIMED_OUT is terminal: the Keeper stopped the Run because
+	// AgentVersion.spec.limits.timeout elapsed. SCHEDULING covers the
+	// provisioning window (Cell requested, Drone not yet bootstrapped).
+	RunPhase_RUN_PHASE_TIMED_OUT RunPhase = 8
 )
 
 // Enum value maps for RunPhase.
@@ -47,6 +51,7 @@ var (
 		5: "RUN_PHASE_SUCCEEDED",
 		6: "RUN_PHASE_FAILED",
 		7: "RUN_PHASE_CANCELLED",
+		8: "RUN_PHASE_TIMED_OUT",
 	}
 	RunPhase_value = map[string]int32{
 		"RUN_PHASE_UNSPECIFIED": 0,
@@ -57,6 +62,7 @@ var (
 		"RUN_PHASE_SUCCEEDED":   5,
 		"RUN_PHASE_FAILED":      6,
 		"RUN_PHASE_CANCELLED":   7,
+		"RUN_PHASE_TIMED_OUT":   8,
 	}
 )
 
@@ -147,9 +153,9 @@ func (x *TokenUsage) GetTotal() int64 {
 	return 0
 }
 
-// Run is a single instance ("Worker") of an Agent. In M0, RunService.Apply
-// persists a Run in RUN_PHASE_PENDING and nothing schedules it — there is
-// no Scheduler until M1.
+// Run is a single instance ("Worker") of an Agent. RunService.Apply always
+// persists a Run in RUN_PHASE_PENDING; the Scheduler (M1) owns every later
+// transition and is the only writer of RunStatus.
 type Run struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Metadata      *ObjectMeta            `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
@@ -220,7 +226,11 @@ type RunSpec struct {
 	// ExecutorHint maps to an Executor's lane, per ADR-0003. Not consumed by
 	// anything in M0; the field exists so M2's vibeD Executor doesn't need a
 	// breaking proto change.
-	ExecutorHint  string `protobuf:"bytes,6,opt,name=executor_hint,json=executorHint,proto3" json:"executor_hint,omitempty"`
+	ExecutorHint string `protobuf:"bytes,6,opt,name=executor_hint,json=executorHint,proto3" json:"executor_hint,omitempty"`
+	// Cancel is desired state, Kubernetes style: setting it asks the
+	// Scheduler to stop the Run and move it to RUN_PHASE_CANCELLED. Clearing
+	// it has no effect once the Run is terminal.
+	Cancel        bool `protobuf:"varint,7,opt,name=cancel,proto3" json:"cancel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -297,6 +307,13 @@ func (x *RunSpec) GetExecutorHint() string {
 	return ""
 }
 
+func (x *RunSpec) GetCancel() bool {
+	if x != nil {
+		return x.Cancel
+	}
+	return false
+}
+
 type RunStatus struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	Phase    RunPhase               `protobuf:"varint,1,opt,name=phase,proto3,enum=hived.v1alpha1.RunPhase" json:"phase,omitempty"`
@@ -304,18 +321,25 @@ type RunStatus struct {
 	Executor string                 `protobuf:"bytes,3,opt,name=executor,proto3" json:"executor,omitempty"`
 	// Identity is an opaque reference to the Run's issued token. Unpopulated
 	// in M0 — see ADR-0002; internal/identity is a stub until M1.
-	Identity      string                 `protobuf:"bytes,4,opt,name=identity,proto3" json:"identity,omitempty"`
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
-	FinishedAt    *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
-	Steps         int64                  `protobuf:"varint,7,opt,name=steps,proto3" json:"steps,omitempty"`
-	Tokens        *TokenUsage            `protobuf:"bytes,8,opt,name=tokens,proto3" json:"tokens,omitempty"`
-	Cost          string                 `protobuf:"bytes,9,opt,name=cost,proto3" json:"cost,omitempty"`
-	Checkpoint    string                 `protobuf:"bytes,10,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
-	Result        *structpb.Struct       `protobuf:"bytes,11,opt,name=result,proto3" json:"result,omitempty"`
-	Message       string                 `protobuf:"bytes,12,opt,name=message,proto3" json:"message,omitempty"`
-	Conditions    []*Condition           `protobuf:"bytes,13,rep,name=conditions,proto3" json:"conditions,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Identity   string                 `protobuf:"bytes,4,opt,name=identity,proto3" json:"identity,omitempty"`
+	StartedAt  *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	FinishedAt *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=finished_at,json=finishedAt,proto3" json:"finished_at,omitempty"`
+	Steps      int64                  `protobuf:"varint,7,opt,name=steps,proto3" json:"steps,omitempty"`
+	Tokens     *TokenUsage            `protobuf:"bytes,8,opt,name=tokens,proto3" json:"tokens,omitempty"`
+	Cost       string                 `protobuf:"bytes,9,opt,name=cost,proto3" json:"cost,omitempty"`
+	Checkpoint string                 `protobuf:"bytes,10,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	Result     *structpb.Struct       `protobuf:"bytes,11,opt,name=result,proto3" json:"result,omitempty"`
+	Message    string                 `protobuf:"bytes,12,opt,name=message,proto3" json:"message,omitempty"`
+	Conditions []*Condition           `protobuf:"bytes,13,rep,name=conditions,proto3" json:"conditions,omitempty"`
+	// Attempt counts Cell incarnations for this Run. 0 until the first Cell
+	// is provisioned; incremented each time the Scheduler re-provisions after
+	// a lost Cell. Drone reports must carry the attempt they belong to so a
+	// stale Cell cannot overwrite its successor's status.
+	Attempt            int32                  `protobuf:"varint,14,opt,name=attempt,proto3" json:"attempt,omitempty"`
+	ObservedGeneration int64                  `protobuf:"varint,15,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
+	LastHeartbeatAt    *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=last_heartbeat_at,json=lastHeartbeatAt,proto3" json:"last_heartbeat_at,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *RunStatus) Reset() {
@@ -439,6 +463,27 @@ func (x *RunStatus) GetConditions() []*Condition {
 	return nil
 }
 
+func (x *RunStatus) GetAttempt() int32 {
+	if x != nil {
+		return x.Attempt
+	}
+	return 0
+}
+
+func (x *RunStatus) GetObservedGeneration() int64 {
+	if x != nil {
+		return x.ObservedGeneration
+	}
+	return 0
+}
+
+func (x *RunStatus) GetLastHeartbeatAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastHeartbeatAt
+	}
+	return nil
+}
+
 var File_hived_v1alpha1_run_proto protoreflect.FileDescriptor
 
 const file_hived_v1alpha1_run_proto_rawDesc = "" +
@@ -452,7 +497,7 @@ const file_hived_v1alpha1_run_proto_rawDesc = "" +
 	"\x03Run\x126\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x1a.hived.v1alpha1.ObjectMetaR\bmetadata\x12+\n" +
 	"\x04spec\x18\x02 \x01(\v2\x17.hived.v1alpha1.RunSpecR\x04spec\x121\n" +
-	"\x06status\x18\x03 \x01(\v2\x19.hived.v1alpha1.RunStatusR\x06status\"\xdb\x01\n" +
+	"\x06status\x18\x03 \x01(\v2\x19.hived.v1alpha1.RunStatusR\x06status\"\xf3\x01\n" +
 	"\aRunSpec\x12\x1b\n" +
 	"\tagent_ref\x18\x01 \x01(\tR\bagentRef\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12-\n" +
@@ -460,7 +505,8 @@ const file_hived_v1alpha1_run_proto_rawDesc = "" +
 	"\vsession_ref\x18\x04 \x01(\tR\n" +
 	"sessionRef\x12$\n" +
 	"\x0eparent_run_ref\x18\x05 \x01(\tR\fparentRunRef\x12#\n" +
-	"\rexecutor_hint\x18\x06 \x01(\tR\fexecutorHint\"\x8a\x04\n" +
+	"\rexecutor_hint\x18\x06 \x01(\tR\fexecutorHint\x12\x16\n" +
+	"\x06cancel\x18\a \x01(\bR\x06cancel\"\x9d\x05\n" +
 	"\tRunStatus\x12.\n" +
 	"\x05phase\x18\x01 \x01(\x0e2\x18.hived.v1alpha1.RunPhaseR\x05phase\x12\x19\n" +
 	"\bcell_ref\x18\x02 \x01(\tR\acellRef\x12\x1a\n" +
@@ -481,7 +527,10 @@ const file_hived_v1alpha1_run_proto_rawDesc = "" +
 	"\amessage\x18\f \x01(\tR\amessage\x129\n" +
 	"\n" +
 	"conditions\x18\r \x03(\v2\x19.hived.v1alpha1.ConditionR\n" +
-	"conditions*\xcb\x01\n" +
+	"conditions\x12\x18\n" +
+	"\aattempt\x18\x0e \x01(\x05R\aattempt\x12/\n" +
+	"\x13observed_generation\x18\x0f \x01(\x03R\x12observedGeneration\x12F\n" +
+	"\x11last_heartbeat_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\x0flastHeartbeatAt*\xe4\x01\n" +
 	"\bRunPhase\x12\x19\n" +
 	"\x15RUN_PHASE_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11RUN_PHASE_PENDING\x10\x01\x12\x18\n" +
@@ -490,7 +539,8 @@ const file_hived_v1alpha1_run_proto_rawDesc = "" +
 	"\x10RUN_PHASE_PAUSED\x10\x04\x12\x17\n" +
 	"\x13RUN_PHASE_SUCCEEDED\x10\x05\x12\x14\n" +
 	"\x10RUN_PHASE_FAILED\x10\x06\x12\x17\n" +
-	"\x13RUN_PHASE_CANCELLED\x10\aB\xb8\x01\n" +
+	"\x13RUN_PHASE_CANCELLED\x10\a\x12\x17\n" +
+	"\x13RUN_PHASE_TIMED_OUT\x10\bB\xb8\x01\n" +
 	"\x12com.hived.v1alpha1B\bRunProtoP\x01Z?github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
 
 var (
@@ -529,11 +579,12 @@ var file_hived_v1alpha1_run_proto_depIdxs = []int32{
 	1,  // 7: hived.v1alpha1.RunStatus.tokens:type_name -> hived.v1alpha1.TokenUsage
 	6,  // 8: hived.v1alpha1.RunStatus.result:type_name -> google.protobuf.Struct
 	8,  // 9: hived.v1alpha1.RunStatus.conditions:type_name -> hived.v1alpha1.Condition
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	7,  // 10: hived.v1alpha1.RunStatus.last_heartbeat_at:type_name -> google.protobuf.Timestamp
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_hived_v1alpha1_run_proto_init() }
