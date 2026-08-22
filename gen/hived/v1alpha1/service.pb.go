@@ -9,6 +9,7 @@ package hivedv1alpha1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -1263,6 +1264,459 @@ func (x *RunWatchEvent) GetObject() *Run {
 	return nil
 }
 
+type RunLogsRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Colony string                 `protobuf:"bytes,1,opt,name=colony,proto3" json:"colony,omitempty"`
+	Name   string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Follow keeps the stream open across Cell replacements until the Run is
+	// terminal.
+	Follow        bool                   `protobuf:"varint,3,opt,name=follow,proto3" json:"follow,omitempty"`
+	Since         *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=since,proto3" json:"since,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunLogsRequest) Reset() {
+	*x = RunLogsRequest{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunLogsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunLogsRequest) ProtoMessage() {}
+
+func (x *RunLogsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunLogsRequest.ProtoReflect.Descriptor instead.
+func (*RunLogsRequest) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *RunLogsRequest) GetColony() string {
+	if x != nil {
+		return x.Colony
+	}
+	return ""
+}
+
+func (x *RunLogsRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *RunLogsRequest) GetFollow() bool {
+	if x != nil {
+		return x.Follow
+	}
+	return false
+}
+
+func (x *RunLogsRequest) GetSince() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Since
+	}
+	return nil
+}
+
+type RunLogChunk struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Ts    *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=ts,proto3" json:"ts,omitempty"`
+	// Stream is "stdout" or "stderr".
+	Stream string `protobuf:"bytes,2,opt,name=stream,proto3" json:"stream,omitempty"`
+	Data   []byte `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	// CellRef identifies which Cell incarnation produced this chunk; it
+	// changes when the Scheduler re-provisions after a lost Cell.
+	CellRef       string `protobuf:"bytes,4,opt,name=cell_ref,json=cellRef,proto3" json:"cell_ref,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RunLogChunk) Reset() {
+	*x = RunLogChunk{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RunLogChunk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RunLogChunk) ProtoMessage() {}
+
+func (x *RunLogChunk) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RunLogChunk.ProtoReflect.Descriptor instead.
+func (*RunLogChunk) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *RunLogChunk) GetTs() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Ts
+	}
+	return nil
+}
+
+func (x *RunLogChunk) GetStream() string {
+	if x != nil {
+		return x.Stream
+	}
+	return ""
+}
+
+func (x *RunLogChunk) GetData() []byte {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *RunLogChunk) GetCellRef() string {
+	if x != nil {
+		return x.CellRef
+	}
+	return ""
+}
+
+type ApplyToolRequest struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Object            *Tool                  `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
+	IfResourceVersion *int64                 `protobuf:"varint,2,opt,name=if_resource_version,json=ifResourceVersion,proto3,oneof" json:"if_resource_version,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *ApplyToolRequest) Reset() {
+	*x = ApplyToolRequest{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyToolRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyToolRequest) ProtoMessage() {}
+
+func (x *ApplyToolRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyToolRequest.ProtoReflect.Descriptor instead.
+func (*ApplyToolRequest) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ApplyToolRequest) GetObject() *Tool {
+	if x != nil {
+		return x.Object
+	}
+	return nil
+}
+
+func (x *ApplyToolRequest) GetIfResourceVersion() int64 {
+	if x != nil && x.IfResourceVersion != nil {
+		return *x.IfResourceVersion
+	}
+	return 0
+}
+
+type GetToolRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Colony        string                 `protobuf:"bytes,1,opt,name=colony,proto3" json:"colony,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetToolRequest) Reset() {
+	*x = GetToolRequest{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetToolRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetToolRequest) ProtoMessage() {}
+
+func (x *GetToolRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetToolRequest.ProtoReflect.Descriptor instead.
+func (*GetToolRequest) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetToolRequest) GetColony() string {
+	if x != nil {
+		return x.Colony
+	}
+	return ""
+}
+
+func (x *GetToolRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type ListToolsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Options       *ListOptions           `protobuf:"bytes,1,opt,name=options,proto3" json:"options,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListToolsRequest) Reset() {
+	*x = ListToolsRequest{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListToolsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListToolsRequest) ProtoMessage() {}
+
+func (x *ListToolsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListToolsRequest.ProtoReflect.Descriptor instead.
+func (*ListToolsRequest) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *ListToolsRequest) GetOptions() *ListOptions {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+type ListToolsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Items         []*Tool                `protobuf:"bytes,1,rep,name=items,proto3" json:"items,omitempty"`
+	ListMeta      *ListMeta              `protobuf:"bytes,2,opt,name=list_meta,json=listMeta,proto3" json:"list_meta,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListToolsResponse) Reset() {
+	*x = ListToolsResponse{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListToolsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListToolsResponse) ProtoMessage() {}
+
+func (x *ListToolsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListToolsResponse.ProtoReflect.Descriptor instead.
+func (*ListToolsResponse) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ListToolsResponse) GetItems() []*Tool {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+func (x *ListToolsResponse) GetListMeta() *ListMeta {
+	if x != nil {
+		return x.ListMeta
+	}
+	return nil
+}
+
+type WatchToolsRequest struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	Options              *ListOptions           `protobuf:"bytes,1,opt,name=options,proto3" json:"options,omitempty"`
+	SinceResourceVersion int64                  `protobuf:"varint,2,opt,name=since_resource_version,json=sinceResourceVersion,proto3" json:"since_resource_version,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *WatchToolsRequest) Reset() {
+	*x = WatchToolsRequest{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WatchToolsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WatchToolsRequest) ProtoMessage() {}
+
+func (x *WatchToolsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WatchToolsRequest.ProtoReflect.Descriptor instead.
+func (*WatchToolsRequest) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *WatchToolsRequest) GetOptions() *ListOptions {
+	if x != nil {
+		return x.Options
+	}
+	return nil
+}
+
+func (x *WatchToolsRequest) GetSinceResourceVersion() int64 {
+	if x != nil {
+		return x.SinceResourceVersion
+	}
+	return 0
+}
+
+type ToolWatchEvent struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Type            WatchEventType         `protobuf:"varint,1,opt,name=type,proto3,enum=hived.v1alpha1.WatchEventType" json:"type,omitempty"`
+	ResourceVersion int64                  `protobuf:"varint,2,opt,name=resource_version,json=resourceVersion,proto3" json:"resource_version,omitempty"`
+	Object          *Tool                  `protobuf:"bytes,3,opt,name=object,proto3" json:"object,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ToolWatchEvent) Reset() {
+	*x = ToolWatchEvent{}
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToolWatchEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToolWatchEvent) ProtoMessage() {}
+
+func (x *ToolWatchEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToolWatchEvent.ProtoReflect.Descriptor instead.
+func (*ToolWatchEvent) Descriptor() ([]byte, []int) {
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *ToolWatchEvent) GetType() WatchEventType {
+	if x != nil {
+		return x.Type
+	}
+	return WatchEventType_WATCH_EVENT_TYPE_UNSPECIFIED
+}
+
+func (x *ToolWatchEvent) GetResourceVersion() int64 {
+	if x != nil {
+		return x.ResourceVersion
+	}
+	return 0
+}
+
+func (x *ToolWatchEvent) GetObject() *Tool {
+	if x != nil {
+		return x.Object
+	}
+	return nil
+}
+
 type AppendEventRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Object        *Event                 `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
@@ -1272,7 +1726,7 @@ type AppendEventRequest struct {
 
 func (x *AppendEventRequest) Reset() {
 	*x = AppendEventRequest{}
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[24]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1284,7 +1738,7 @@ func (x *AppendEventRequest) String() string {
 func (*AppendEventRequest) ProtoMessage() {}
 
 func (x *AppendEventRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[24]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1297,7 +1751,7 @@ func (x *AppendEventRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AppendEventRequest.ProtoReflect.Descriptor instead.
 func (*AppendEventRequest) Descriptor() ([]byte, []int) {
-	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{24}
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *AppendEventRequest) GetObject() *Event {
@@ -1319,7 +1773,7 @@ type ListEventsRequest struct {
 
 func (x *ListEventsRequest) Reset() {
 	*x = ListEventsRequest{}
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[25]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1331,7 +1785,7 @@ func (x *ListEventsRequest) String() string {
 func (*ListEventsRequest) ProtoMessage() {}
 
 func (x *ListEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[25]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1344,7 +1798,7 @@ func (x *ListEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEventsRequest.ProtoReflect.Descriptor instead.
 func (*ListEventsRequest) Descriptor() ([]byte, []int) {
-	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{25}
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ListEventsRequest) GetColony() string {
@@ -1384,7 +1838,7 @@ type ListEventsResponse struct {
 
 func (x *ListEventsResponse) Reset() {
 	*x = ListEventsResponse{}
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[26]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1396,7 +1850,7 @@ func (x *ListEventsResponse) String() string {
 func (*ListEventsResponse) ProtoMessage() {}
 
 func (x *ListEventsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[26]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1409,7 +1863,7 @@ func (x *ListEventsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListEventsResponse.ProtoReflect.Descriptor instead.
 func (*ListEventsResponse) Descriptor() ([]byte, []int) {
-	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{26}
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListEventsResponse) GetItems() []*Event {
@@ -1430,7 +1884,7 @@ type WatchEventsRequest struct {
 
 func (x *WatchEventsRequest) Reset() {
 	*x = WatchEventsRequest{}
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[27]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1442,7 +1896,7 @@ func (x *WatchEventsRequest) String() string {
 func (*WatchEventsRequest) ProtoMessage() {}
 
 func (x *WatchEventsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_hived_v1alpha1_service_proto_msgTypes[27]
+	mi := &file_hived_v1alpha1_service_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1455,7 +1909,7 @@ func (x *WatchEventsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchEventsRequest.ProtoReflect.Descriptor instead.
 func (*WatchEventsRequest) Descriptor() ([]byte, []int) {
-	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{27}
+	return file_hived_v1alpha1_service_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *WatchEventsRequest) GetColony() string {
@@ -1483,7 +1937,7 @@ var File_hived_v1alpha1_service_proto protoreflect.FileDescriptor
 
 const file_hived_v1alpha1_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1chived/v1alpha1/service.proto\x12\x0ehived.v1alpha1\x1a\x1ahived/v1alpha1/agent.proto\x1a\x1bhived/v1alpha1/colony.proto\x1a\x1ahived/v1alpha1/event.proto\x1a\x19hived/v1alpha1/meta.proto\x1a\x18hived/v1alpha1/run.proto\"\x91\x01\n" +
+	"\x1chived/v1alpha1/service.proto\x12\x0ehived.v1alpha1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1ahived/v1alpha1/agent.proto\x1a\x1bhived/v1alpha1/colony.proto\x1a\x1ahived/v1alpha1/event.proto\x1a\x19hived/v1alpha1/meta.proto\x1a\x18hived/v1alpha1/run.proto\x1a\x19hived/v1alpha1/tool.proto\"\x91\x01\n" +
 	"\x12ApplyColonyRequest\x12.\n" +
 	"\x06object\x18\x01 \x01(\v2\x16.hived.v1alpha1.ColonyR\x06object\x123\n" +
 	"\x13if_resource_version\x18\x02 \x01(\x03H\x00R\x11ifResourceVersion\x88\x01\x01B\x16\n" +
@@ -1558,7 +2012,36 @@ const file_hived_v1alpha1_service_proto_rawDesc = "" +
 	"\rRunWatchEvent\x122\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x1e.hived.v1alpha1.WatchEventTypeR\x04type\x12)\n" +
 	"\x10resource_version\x18\x02 \x01(\x03R\x0fresourceVersion\x12+\n" +
-	"\x06object\x18\x03 \x01(\v2\x13.hived.v1alpha1.RunR\x06object\"C\n" +
+	"\x06object\x18\x03 \x01(\v2\x13.hived.v1alpha1.RunR\x06object\"\x86\x01\n" +
+	"\x0eRunLogsRequest\x12\x16\n" +
+	"\x06colony\x18\x01 \x01(\tR\x06colony\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06follow\x18\x03 \x01(\bR\x06follow\x120\n" +
+	"\x05since\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\"\x80\x01\n" +
+	"\vRunLogChunk\x12*\n" +
+	"\x02ts\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x02ts\x12\x16\n" +
+	"\x06stream\x18\x02 \x01(\tR\x06stream\x12\x12\n" +
+	"\x04data\x18\x03 \x01(\fR\x04data\x12\x19\n" +
+	"\bcell_ref\x18\x04 \x01(\tR\acellRef\"\x8d\x01\n" +
+	"\x10ApplyToolRequest\x12,\n" +
+	"\x06object\x18\x01 \x01(\v2\x14.hived.v1alpha1.ToolR\x06object\x123\n" +
+	"\x13if_resource_version\x18\x02 \x01(\x03H\x00R\x11ifResourceVersion\x88\x01\x01B\x16\n" +
+	"\x14_if_resource_version\"<\n" +
+	"\x0eGetToolRequest\x12\x16\n" +
+	"\x06colony\x18\x01 \x01(\tR\x06colony\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"I\n" +
+	"\x10ListToolsRequest\x125\n" +
+	"\aoptions\x18\x01 \x01(\v2\x1b.hived.v1alpha1.ListOptionsR\aoptions\"v\n" +
+	"\x11ListToolsResponse\x12*\n" +
+	"\x05items\x18\x01 \x03(\v2\x14.hived.v1alpha1.ToolR\x05items\x125\n" +
+	"\tlist_meta\x18\x02 \x01(\v2\x18.hived.v1alpha1.ListMetaR\blistMeta\"\x80\x01\n" +
+	"\x11WatchToolsRequest\x125\n" +
+	"\aoptions\x18\x01 \x01(\v2\x1b.hived.v1alpha1.ListOptionsR\aoptions\x124\n" +
+	"\x16since_resource_version\x18\x02 \x01(\x03R\x14sinceResourceVersion\"\x9d\x01\n" +
+	"\x0eToolWatchEvent\x122\n" +
+	"\x04type\x18\x01 \x01(\x0e2\x1e.hived.v1alpha1.WatchEventTypeR\x04type\x12)\n" +
+	"\x10resource_version\x18\x02 \x01(\x03R\x0fresourceVersion\x12,\n" +
+	"\x06object\x18\x03 \x01(\v2\x14.hived.v1alpha1.ToolR\x06object\"C\n" +
 	"\x12AppendEventRequest\x12-\n" +
 	"\x06object\x18\x01 \x01(\v2\x15.hived.v1alpha1.EventR\x06object\"p\n" +
 	"\x11ListEventsRequest\x12\x16\n" +
@@ -1586,13 +2069,19 @@ const file_hived_v1alpha1_service_proto_rawDesc = "" +
 	"\x05Apply\x12(.hived.v1alpha1.ApplyAgentVersionRequest\x1a\x1c.hived.v1alpha1.AgentVersion\x12K\n" +
 	"\x03Get\x12&.hived.v1alpha1.GetAgentVersionRequest\x1a\x1c.hived.v1alpha1.AgentVersion\x12[\n" +
 	"\x04List\x12(.hived.v1alpha1.ListAgentVersionsRequest\x1a).hived.v1alpha1.ListAgentVersionsResponse\x12\\\n" +
-	"\x05Watch\x12).hived.v1alpha1.WatchAgentVersionsRequest\x1a&.hived.v1alpha1.AgentVersionWatchEvent0\x012\x9d\x02\n" +
+	"\x05Watch\x12).hived.v1alpha1.WatchAgentVersionsRequest\x1a&.hived.v1alpha1.AgentVersionWatchEvent0\x012\xe4\x02\n" +
 	"\n" +
 	"RunService\x12=\n" +
 	"\x05Apply\x12\x1f.hived.v1alpha1.ApplyRunRequest\x1a\x13.hived.v1alpha1.Run\x129\n" +
 	"\x03Get\x12\x1d.hived.v1alpha1.GetRunRequest\x1a\x13.hived.v1alpha1.Run\x12I\n" +
 	"\x04List\x12\x1f.hived.v1alpha1.ListRunsRequest\x1a .hived.v1alpha1.ListRunsResponse\x12J\n" +
-	"\x05Watch\x12 .hived.v1alpha1.WatchRunsRequest\x1a\x1d.hived.v1alpha1.RunWatchEvent0\x012\xe8\x01\n" +
+	"\x05Watch\x12 .hived.v1alpha1.WatchRunsRequest\x1a\x1d.hived.v1alpha1.RunWatchEvent0\x01\x12E\n" +
+	"\x04Logs\x12\x1e.hived.v1alpha1.RunLogsRequest\x1a\x1b.hived.v1alpha1.RunLogChunk0\x012\xa6\x02\n" +
+	"\vToolService\x12?\n" +
+	"\x05Apply\x12 .hived.v1alpha1.ApplyToolRequest\x1a\x14.hived.v1alpha1.Tool\x12;\n" +
+	"\x03Get\x12\x1e.hived.v1alpha1.GetToolRequest\x1a\x14.hived.v1alpha1.Tool\x12K\n" +
+	"\x04List\x12 .hived.v1alpha1.ListToolsRequest\x1a!.hived.v1alpha1.ListToolsResponse\x12L\n" +
+	"\x05Watch\x12!.hived.v1alpha1.WatchToolsRequest\x1a\x1e.hived.v1alpha1.ToolWatchEvent0\x012\xe8\x01\n" +
 	"\fEventService\x12C\n" +
 	"\x06Append\x12\".hived.v1alpha1.AppendEventRequest\x1a\x15.hived.v1alpha1.Event\x12M\n" +
 	"\x04List\x12!.hived.v1alpha1.ListEventsRequest\x1a\".hived.v1alpha1.ListEventsResponse\x12D\n" +
@@ -1611,7 +2100,7 @@ func file_hived_v1alpha1_service_proto_rawDescGZIP() []byte {
 	return file_hived_v1alpha1_service_proto_rawDescData
 }
 
-var file_hived_v1alpha1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_hived_v1alpha1_service_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_hived_v1alpha1_service_proto_goTypes = []any{
 	(*ApplyColonyRequest)(nil),        // 0: hived.v1alpha1.ApplyColonyRequest
 	(*GetColonyRequest)(nil),          // 1: hived.v1alpha1.GetColonyRequest
@@ -1637,93 +2126,122 @@ var file_hived_v1alpha1_service_proto_goTypes = []any{
 	(*ListRunsResponse)(nil),          // 21: hived.v1alpha1.ListRunsResponse
 	(*WatchRunsRequest)(nil),          // 22: hived.v1alpha1.WatchRunsRequest
 	(*RunWatchEvent)(nil),             // 23: hived.v1alpha1.RunWatchEvent
-	(*AppendEventRequest)(nil),        // 24: hived.v1alpha1.AppendEventRequest
-	(*ListEventsRequest)(nil),         // 25: hived.v1alpha1.ListEventsRequest
-	(*ListEventsResponse)(nil),        // 26: hived.v1alpha1.ListEventsResponse
-	(*WatchEventsRequest)(nil),        // 27: hived.v1alpha1.WatchEventsRequest
-	(*Colony)(nil),                    // 28: hived.v1alpha1.Colony
-	(*ListOptions)(nil),               // 29: hived.v1alpha1.ListOptions
-	(*ListMeta)(nil),                  // 30: hived.v1alpha1.ListMeta
-	(WatchEventType)(0),               // 31: hived.v1alpha1.WatchEventType
-	(*Agent)(nil),                     // 32: hived.v1alpha1.Agent
-	(*AgentVersion)(nil),              // 33: hived.v1alpha1.AgentVersion
-	(*Run)(nil),                       // 34: hived.v1alpha1.Run
-	(*Event)(nil),                     // 35: hived.v1alpha1.Event
+	(*RunLogsRequest)(nil),            // 24: hived.v1alpha1.RunLogsRequest
+	(*RunLogChunk)(nil),               // 25: hived.v1alpha1.RunLogChunk
+	(*ApplyToolRequest)(nil),          // 26: hived.v1alpha1.ApplyToolRequest
+	(*GetToolRequest)(nil),            // 27: hived.v1alpha1.GetToolRequest
+	(*ListToolsRequest)(nil),          // 28: hived.v1alpha1.ListToolsRequest
+	(*ListToolsResponse)(nil),         // 29: hived.v1alpha1.ListToolsResponse
+	(*WatchToolsRequest)(nil),         // 30: hived.v1alpha1.WatchToolsRequest
+	(*ToolWatchEvent)(nil),            // 31: hived.v1alpha1.ToolWatchEvent
+	(*AppendEventRequest)(nil),        // 32: hived.v1alpha1.AppendEventRequest
+	(*ListEventsRequest)(nil),         // 33: hived.v1alpha1.ListEventsRequest
+	(*ListEventsResponse)(nil),        // 34: hived.v1alpha1.ListEventsResponse
+	(*WatchEventsRequest)(nil),        // 35: hived.v1alpha1.WatchEventsRequest
+	(*Colony)(nil),                    // 36: hived.v1alpha1.Colony
+	(*ListOptions)(nil),               // 37: hived.v1alpha1.ListOptions
+	(*ListMeta)(nil),                  // 38: hived.v1alpha1.ListMeta
+	(WatchEventType)(0),               // 39: hived.v1alpha1.WatchEventType
+	(*Agent)(nil),                     // 40: hived.v1alpha1.Agent
+	(*AgentVersion)(nil),              // 41: hived.v1alpha1.AgentVersion
+	(*Run)(nil),                       // 42: hived.v1alpha1.Run
+	(*timestamppb.Timestamp)(nil),     // 43: google.protobuf.Timestamp
+	(*Tool)(nil),                      // 44: hived.v1alpha1.Tool
+	(*Event)(nil),                     // 45: hived.v1alpha1.Event
 }
 var file_hived_v1alpha1_service_proto_depIdxs = []int32{
-	28, // 0: hived.v1alpha1.ApplyColonyRequest.object:type_name -> hived.v1alpha1.Colony
-	29, // 1: hived.v1alpha1.ListColoniesRequest.options:type_name -> hived.v1alpha1.ListOptions
-	28, // 2: hived.v1alpha1.ListColoniesResponse.items:type_name -> hived.v1alpha1.Colony
-	30, // 3: hived.v1alpha1.ListColoniesResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
-	29, // 4: hived.v1alpha1.WatchColoniesRequest.options:type_name -> hived.v1alpha1.ListOptions
-	31, // 5: hived.v1alpha1.ColonyWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
-	28, // 6: hived.v1alpha1.ColonyWatchEvent.object:type_name -> hived.v1alpha1.Colony
-	32, // 7: hived.v1alpha1.ApplyAgentRequest.object:type_name -> hived.v1alpha1.Agent
-	29, // 8: hived.v1alpha1.ListAgentsRequest.options:type_name -> hived.v1alpha1.ListOptions
-	32, // 9: hived.v1alpha1.ListAgentsResponse.items:type_name -> hived.v1alpha1.Agent
-	30, // 10: hived.v1alpha1.ListAgentsResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
-	29, // 11: hived.v1alpha1.WatchAgentsRequest.options:type_name -> hived.v1alpha1.ListOptions
-	31, // 12: hived.v1alpha1.AgentWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
-	32, // 13: hived.v1alpha1.AgentWatchEvent.object:type_name -> hived.v1alpha1.Agent
-	33, // 14: hived.v1alpha1.ApplyAgentVersionRequest.object:type_name -> hived.v1alpha1.AgentVersion
-	29, // 15: hived.v1alpha1.ListAgentVersionsRequest.options:type_name -> hived.v1alpha1.ListOptions
-	33, // 16: hived.v1alpha1.ListAgentVersionsResponse.items:type_name -> hived.v1alpha1.AgentVersion
-	30, // 17: hived.v1alpha1.ListAgentVersionsResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
-	29, // 18: hived.v1alpha1.WatchAgentVersionsRequest.options:type_name -> hived.v1alpha1.ListOptions
-	31, // 19: hived.v1alpha1.AgentVersionWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
-	33, // 20: hived.v1alpha1.AgentVersionWatchEvent.object:type_name -> hived.v1alpha1.AgentVersion
-	34, // 21: hived.v1alpha1.ApplyRunRequest.object:type_name -> hived.v1alpha1.Run
-	29, // 22: hived.v1alpha1.ListRunsRequest.options:type_name -> hived.v1alpha1.ListOptions
-	34, // 23: hived.v1alpha1.ListRunsResponse.items:type_name -> hived.v1alpha1.Run
-	30, // 24: hived.v1alpha1.ListRunsResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
-	29, // 25: hived.v1alpha1.WatchRunsRequest.options:type_name -> hived.v1alpha1.ListOptions
-	31, // 26: hived.v1alpha1.RunWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
-	34, // 27: hived.v1alpha1.RunWatchEvent.object:type_name -> hived.v1alpha1.Run
-	35, // 28: hived.v1alpha1.AppendEventRequest.object:type_name -> hived.v1alpha1.Event
-	35, // 29: hived.v1alpha1.ListEventsResponse.items:type_name -> hived.v1alpha1.Event
-	0,  // 30: hived.v1alpha1.ColonyService.Apply:input_type -> hived.v1alpha1.ApplyColonyRequest
-	1,  // 31: hived.v1alpha1.ColonyService.Get:input_type -> hived.v1alpha1.GetColonyRequest
-	2,  // 32: hived.v1alpha1.ColonyService.List:input_type -> hived.v1alpha1.ListColoniesRequest
-	4,  // 33: hived.v1alpha1.ColonyService.Watch:input_type -> hived.v1alpha1.WatchColoniesRequest
-	6,  // 34: hived.v1alpha1.AgentService.Apply:input_type -> hived.v1alpha1.ApplyAgentRequest
-	7,  // 35: hived.v1alpha1.AgentService.Get:input_type -> hived.v1alpha1.GetAgentRequest
-	8,  // 36: hived.v1alpha1.AgentService.List:input_type -> hived.v1alpha1.ListAgentsRequest
-	10, // 37: hived.v1alpha1.AgentService.Watch:input_type -> hived.v1alpha1.WatchAgentsRequest
-	12, // 38: hived.v1alpha1.AgentVersionService.Apply:input_type -> hived.v1alpha1.ApplyAgentVersionRequest
-	13, // 39: hived.v1alpha1.AgentVersionService.Get:input_type -> hived.v1alpha1.GetAgentVersionRequest
-	14, // 40: hived.v1alpha1.AgentVersionService.List:input_type -> hived.v1alpha1.ListAgentVersionsRequest
-	16, // 41: hived.v1alpha1.AgentVersionService.Watch:input_type -> hived.v1alpha1.WatchAgentVersionsRequest
-	18, // 42: hived.v1alpha1.RunService.Apply:input_type -> hived.v1alpha1.ApplyRunRequest
-	19, // 43: hived.v1alpha1.RunService.Get:input_type -> hived.v1alpha1.GetRunRequest
-	20, // 44: hived.v1alpha1.RunService.List:input_type -> hived.v1alpha1.ListRunsRequest
-	22, // 45: hived.v1alpha1.RunService.Watch:input_type -> hived.v1alpha1.WatchRunsRequest
-	24, // 46: hived.v1alpha1.EventService.Append:input_type -> hived.v1alpha1.AppendEventRequest
-	25, // 47: hived.v1alpha1.EventService.List:input_type -> hived.v1alpha1.ListEventsRequest
-	27, // 48: hived.v1alpha1.EventService.Watch:input_type -> hived.v1alpha1.WatchEventsRequest
-	28, // 49: hived.v1alpha1.ColonyService.Apply:output_type -> hived.v1alpha1.Colony
-	28, // 50: hived.v1alpha1.ColonyService.Get:output_type -> hived.v1alpha1.Colony
-	3,  // 51: hived.v1alpha1.ColonyService.List:output_type -> hived.v1alpha1.ListColoniesResponse
-	5,  // 52: hived.v1alpha1.ColonyService.Watch:output_type -> hived.v1alpha1.ColonyWatchEvent
-	32, // 53: hived.v1alpha1.AgentService.Apply:output_type -> hived.v1alpha1.Agent
-	32, // 54: hived.v1alpha1.AgentService.Get:output_type -> hived.v1alpha1.Agent
-	9,  // 55: hived.v1alpha1.AgentService.List:output_type -> hived.v1alpha1.ListAgentsResponse
-	11, // 56: hived.v1alpha1.AgentService.Watch:output_type -> hived.v1alpha1.AgentWatchEvent
-	33, // 57: hived.v1alpha1.AgentVersionService.Apply:output_type -> hived.v1alpha1.AgentVersion
-	33, // 58: hived.v1alpha1.AgentVersionService.Get:output_type -> hived.v1alpha1.AgentVersion
-	15, // 59: hived.v1alpha1.AgentVersionService.List:output_type -> hived.v1alpha1.ListAgentVersionsResponse
-	17, // 60: hived.v1alpha1.AgentVersionService.Watch:output_type -> hived.v1alpha1.AgentVersionWatchEvent
-	34, // 61: hived.v1alpha1.RunService.Apply:output_type -> hived.v1alpha1.Run
-	34, // 62: hived.v1alpha1.RunService.Get:output_type -> hived.v1alpha1.Run
-	21, // 63: hived.v1alpha1.RunService.List:output_type -> hived.v1alpha1.ListRunsResponse
-	23, // 64: hived.v1alpha1.RunService.Watch:output_type -> hived.v1alpha1.RunWatchEvent
-	35, // 65: hived.v1alpha1.EventService.Append:output_type -> hived.v1alpha1.Event
-	26, // 66: hived.v1alpha1.EventService.List:output_type -> hived.v1alpha1.ListEventsResponse
-	35, // 67: hived.v1alpha1.EventService.Watch:output_type -> hived.v1alpha1.Event
-	49, // [49:68] is the sub-list for method output_type
-	30, // [30:49] is the sub-list for method input_type
-	30, // [30:30] is the sub-list for extension type_name
-	30, // [30:30] is the sub-list for extension extendee
-	0,  // [0:30] is the sub-list for field type_name
+	36, // 0: hived.v1alpha1.ApplyColonyRequest.object:type_name -> hived.v1alpha1.Colony
+	37, // 1: hived.v1alpha1.ListColoniesRequest.options:type_name -> hived.v1alpha1.ListOptions
+	36, // 2: hived.v1alpha1.ListColoniesResponse.items:type_name -> hived.v1alpha1.Colony
+	38, // 3: hived.v1alpha1.ListColoniesResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
+	37, // 4: hived.v1alpha1.WatchColoniesRequest.options:type_name -> hived.v1alpha1.ListOptions
+	39, // 5: hived.v1alpha1.ColonyWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
+	36, // 6: hived.v1alpha1.ColonyWatchEvent.object:type_name -> hived.v1alpha1.Colony
+	40, // 7: hived.v1alpha1.ApplyAgentRequest.object:type_name -> hived.v1alpha1.Agent
+	37, // 8: hived.v1alpha1.ListAgentsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	40, // 9: hived.v1alpha1.ListAgentsResponse.items:type_name -> hived.v1alpha1.Agent
+	38, // 10: hived.v1alpha1.ListAgentsResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
+	37, // 11: hived.v1alpha1.WatchAgentsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	39, // 12: hived.v1alpha1.AgentWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
+	40, // 13: hived.v1alpha1.AgentWatchEvent.object:type_name -> hived.v1alpha1.Agent
+	41, // 14: hived.v1alpha1.ApplyAgentVersionRequest.object:type_name -> hived.v1alpha1.AgentVersion
+	37, // 15: hived.v1alpha1.ListAgentVersionsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	41, // 16: hived.v1alpha1.ListAgentVersionsResponse.items:type_name -> hived.v1alpha1.AgentVersion
+	38, // 17: hived.v1alpha1.ListAgentVersionsResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
+	37, // 18: hived.v1alpha1.WatchAgentVersionsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	39, // 19: hived.v1alpha1.AgentVersionWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
+	41, // 20: hived.v1alpha1.AgentVersionWatchEvent.object:type_name -> hived.v1alpha1.AgentVersion
+	42, // 21: hived.v1alpha1.ApplyRunRequest.object:type_name -> hived.v1alpha1.Run
+	37, // 22: hived.v1alpha1.ListRunsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	42, // 23: hived.v1alpha1.ListRunsResponse.items:type_name -> hived.v1alpha1.Run
+	38, // 24: hived.v1alpha1.ListRunsResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
+	37, // 25: hived.v1alpha1.WatchRunsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	39, // 26: hived.v1alpha1.RunWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
+	42, // 27: hived.v1alpha1.RunWatchEvent.object:type_name -> hived.v1alpha1.Run
+	43, // 28: hived.v1alpha1.RunLogsRequest.since:type_name -> google.protobuf.Timestamp
+	43, // 29: hived.v1alpha1.RunLogChunk.ts:type_name -> google.protobuf.Timestamp
+	44, // 30: hived.v1alpha1.ApplyToolRequest.object:type_name -> hived.v1alpha1.Tool
+	37, // 31: hived.v1alpha1.ListToolsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	44, // 32: hived.v1alpha1.ListToolsResponse.items:type_name -> hived.v1alpha1.Tool
+	38, // 33: hived.v1alpha1.ListToolsResponse.list_meta:type_name -> hived.v1alpha1.ListMeta
+	37, // 34: hived.v1alpha1.WatchToolsRequest.options:type_name -> hived.v1alpha1.ListOptions
+	39, // 35: hived.v1alpha1.ToolWatchEvent.type:type_name -> hived.v1alpha1.WatchEventType
+	44, // 36: hived.v1alpha1.ToolWatchEvent.object:type_name -> hived.v1alpha1.Tool
+	45, // 37: hived.v1alpha1.AppendEventRequest.object:type_name -> hived.v1alpha1.Event
+	45, // 38: hived.v1alpha1.ListEventsResponse.items:type_name -> hived.v1alpha1.Event
+	0,  // 39: hived.v1alpha1.ColonyService.Apply:input_type -> hived.v1alpha1.ApplyColonyRequest
+	1,  // 40: hived.v1alpha1.ColonyService.Get:input_type -> hived.v1alpha1.GetColonyRequest
+	2,  // 41: hived.v1alpha1.ColonyService.List:input_type -> hived.v1alpha1.ListColoniesRequest
+	4,  // 42: hived.v1alpha1.ColonyService.Watch:input_type -> hived.v1alpha1.WatchColoniesRequest
+	6,  // 43: hived.v1alpha1.AgentService.Apply:input_type -> hived.v1alpha1.ApplyAgentRequest
+	7,  // 44: hived.v1alpha1.AgentService.Get:input_type -> hived.v1alpha1.GetAgentRequest
+	8,  // 45: hived.v1alpha1.AgentService.List:input_type -> hived.v1alpha1.ListAgentsRequest
+	10, // 46: hived.v1alpha1.AgentService.Watch:input_type -> hived.v1alpha1.WatchAgentsRequest
+	12, // 47: hived.v1alpha1.AgentVersionService.Apply:input_type -> hived.v1alpha1.ApplyAgentVersionRequest
+	13, // 48: hived.v1alpha1.AgentVersionService.Get:input_type -> hived.v1alpha1.GetAgentVersionRequest
+	14, // 49: hived.v1alpha1.AgentVersionService.List:input_type -> hived.v1alpha1.ListAgentVersionsRequest
+	16, // 50: hived.v1alpha1.AgentVersionService.Watch:input_type -> hived.v1alpha1.WatchAgentVersionsRequest
+	18, // 51: hived.v1alpha1.RunService.Apply:input_type -> hived.v1alpha1.ApplyRunRequest
+	19, // 52: hived.v1alpha1.RunService.Get:input_type -> hived.v1alpha1.GetRunRequest
+	20, // 53: hived.v1alpha1.RunService.List:input_type -> hived.v1alpha1.ListRunsRequest
+	22, // 54: hived.v1alpha1.RunService.Watch:input_type -> hived.v1alpha1.WatchRunsRequest
+	24, // 55: hived.v1alpha1.RunService.Logs:input_type -> hived.v1alpha1.RunLogsRequest
+	26, // 56: hived.v1alpha1.ToolService.Apply:input_type -> hived.v1alpha1.ApplyToolRequest
+	27, // 57: hived.v1alpha1.ToolService.Get:input_type -> hived.v1alpha1.GetToolRequest
+	28, // 58: hived.v1alpha1.ToolService.List:input_type -> hived.v1alpha1.ListToolsRequest
+	30, // 59: hived.v1alpha1.ToolService.Watch:input_type -> hived.v1alpha1.WatchToolsRequest
+	32, // 60: hived.v1alpha1.EventService.Append:input_type -> hived.v1alpha1.AppendEventRequest
+	33, // 61: hived.v1alpha1.EventService.List:input_type -> hived.v1alpha1.ListEventsRequest
+	35, // 62: hived.v1alpha1.EventService.Watch:input_type -> hived.v1alpha1.WatchEventsRequest
+	36, // 63: hived.v1alpha1.ColonyService.Apply:output_type -> hived.v1alpha1.Colony
+	36, // 64: hived.v1alpha1.ColonyService.Get:output_type -> hived.v1alpha1.Colony
+	3,  // 65: hived.v1alpha1.ColonyService.List:output_type -> hived.v1alpha1.ListColoniesResponse
+	5,  // 66: hived.v1alpha1.ColonyService.Watch:output_type -> hived.v1alpha1.ColonyWatchEvent
+	40, // 67: hived.v1alpha1.AgentService.Apply:output_type -> hived.v1alpha1.Agent
+	40, // 68: hived.v1alpha1.AgentService.Get:output_type -> hived.v1alpha1.Agent
+	9,  // 69: hived.v1alpha1.AgentService.List:output_type -> hived.v1alpha1.ListAgentsResponse
+	11, // 70: hived.v1alpha1.AgentService.Watch:output_type -> hived.v1alpha1.AgentWatchEvent
+	41, // 71: hived.v1alpha1.AgentVersionService.Apply:output_type -> hived.v1alpha1.AgentVersion
+	41, // 72: hived.v1alpha1.AgentVersionService.Get:output_type -> hived.v1alpha1.AgentVersion
+	15, // 73: hived.v1alpha1.AgentVersionService.List:output_type -> hived.v1alpha1.ListAgentVersionsResponse
+	17, // 74: hived.v1alpha1.AgentVersionService.Watch:output_type -> hived.v1alpha1.AgentVersionWatchEvent
+	42, // 75: hived.v1alpha1.RunService.Apply:output_type -> hived.v1alpha1.Run
+	42, // 76: hived.v1alpha1.RunService.Get:output_type -> hived.v1alpha1.Run
+	21, // 77: hived.v1alpha1.RunService.List:output_type -> hived.v1alpha1.ListRunsResponse
+	23, // 78: hived.v1alpha1.RunService.Watch:output_type -> hived.v1alpha1.RunWatchEvent
+	25, // 79: hived.v1alpha1.RunService.Logs:output_type -> hived.v1alpha1.RunLogChunk
+	44, // 80: hived.v1alpha1.ToolService.Apply:output_type -> hived.v1alpha1.Tool
+	44, // 81: hived.v1alpha1.ToolService.Get:output_type -> hived.v1alpha1.Tool
+	29, // 82: hived.v1alpha1.ToolService.List:output_type -> hived.v1alpha1.ListToolsResponse
+	31, // 83: hived.v1alpha1.ToolService.Watch:output_type -> hived.v1alpha1.ToolWatchEvent
+	45, // 84: hived.v1alpha1.EventService.Append:output_type -> hived.v1alpha1.Event
+	34, // 85: hived.v1alpha1.EventService.List:output_type -> hived.v1alpha1.ListEventsResponse
+	45, // 86: hived.v1alpha1.EventService.Watch:output_type -> hived.v1alpha1.Event
+	63, // [63:87] is the sub-list for method output_type
+	39, // [39:63] is the sub-list for method input_type
+	39, // [39:39] is the sub-list for extension type_name
+	39, // [39:39] is the sub-list for extension extendee
+	0,  // [0:39] is the sub-list for field type_name
 }
 
 func init() { file_hived_v1alpha1_service_proto_init() }
@@ -1736,19 +2254,21 @@ func file_hived_v1alpha1_service_proto_init() {
 	file_hived_v1alpha1_event_proto_init()
 	file_hived_v1alpha1_meta_proto_init()
 	file_hived_v1alpha1_run_proto_init()
+	file_hived_v1alpha1_tool_proto_init()
 	file_hived_v1alpha1_service_proto_msgTypes[0].OneofWrappers = []any{}
 	file_hived_v1alpha1_service_proto_msgTypes[6].OneofWrappers = []any{}
 	file_hived_v1alpha1_service_proto_msgTypes[12].OneofWrappers = []any{}
 	file_hived_v1alpha1_service_proto_msgTypes[18].OneofWrappers = []any{}
+	file_hived_v1alpha1_service_proto_msgTypes[26].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_hived_v1alpha1_service_proto_rawDesc), len(file_hived_v1alpha1_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   36,
 			NumExtensions: 0,
-			NumServices:   5,
+			NumServices:   6,
 		},
 		GoTypes:           file_hived_v1alpha1_service_proto_goTypes,
 		DependencyIndexes: file_hived_v1alpha1_service_proto_depIdxs,

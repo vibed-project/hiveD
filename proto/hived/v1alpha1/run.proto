@@ -17,6 +17,10 @@ enum RunPhase {
   RUN_PHASE_SUCCEEDED = 5;
   RUN_PHASE_FAILED = 6;
   RUN_PHASE_CANCELLED = 7;
+  // TIMED_OUT is terminal: the Keeper stopped the Run because
+  // AgentVersion.spec.limits.timeout elapsed. SCHEDULING covers the
+  // provisioning window (Cell requested, Drone not yet bootstrapped).
+  RUN_PHASE_TIMED_OUT = 8;
 }
 
 message TokenUsage {
@@ -25,9 +29,9 @@ message TokenUsage {
   int64 total = 3;
 }
 
-// Run is a single instance ("Worker") of an Agent. In M0, RunService.Apply
-// persists a Run in RUN_PHASE_PENDING and nothing schedules it — there is
-// no Scheduler until M1.
+// Run is a single instance ("Worker") of an Agent. RunService.Apply always
+// persists a Run in RUN_PHASE_PENDING; the Scheduler (M1) owns every later
+// transition and is the only writer of RunStatus.
 message Run {
   ObjectMeta metadata = 1;
   RunSpec spec = 2;
@@ -44,6 +48,10 @@ message RunSpec {
   // anything in M0; the field exists so M2's vibeD Executor doesn't need a
   // breaking proto change.
   string executor_hint = 6;
+  // Cancel is desired state, Kubernetes style: setting it asks the
+  // Scheduler to stop the Run and move it to RUN_PHASE_CANCELLED. Clearing
+  // it has no effect once the Run is terminal.
+  bool cancel = 7;
 }
 
 message RunStatus {
@@ -62,4 +70,11 @@ message RunStatus {
   google.protobuf.Struct result = 11;
   string message = 12;
   repeated Condition conditions = 13;
+  // Attempt counts Cell incarnations for this Run. 0 until the first Cell
+  // is provisioned; incremented each time the Scheduler re-provisions after
+  // a lost Cell. Drone reports must carry the attempt they belong to so a
+  // stale Cell cannot overwrite its successor's status.
+  int32 attempt = 14;
+  int64 observed_generation = 15;
+  google.protobuf.Timestamp last_heartbeat_at = 16;
 }

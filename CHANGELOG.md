@@ -7,7 +7,20 @@ hiveD is pre-1.0; no version has been tagged yet.
 
 ## [Unreleased]
 
-### Added
+### Added (M1)
+
+- `proto/hived/v1alpha1`: `Tool` resource (`ToolService` with
+  `Apply/Get/List/Watch`; types MCP, BUILTIN, AGENT); `DroneService`
+  (`Bootstrap/Heartbeat/Finish`) and `ToolBrokerService`
+  (`ListRunTools/CallTool`) as the Drone ↔ Keeper contract; `RunService.Logs`
+  (returns `CodeUnimplemented` until the Executor exists);
+  `RunPhase.TIMED_OUT`; `RunSpec.cancel`; `RunStatus.attempt`,
+  `observed_generation`, `last_heartbeat_at`. All additive.
+- ADR-0005 (Draft): the Event `type` vocabulary and the Keeper/Drone
+  emitter split.
+- `hived apply/get/watch` understand the `Tool` kind.
+
+### Added (M0)
 
 - Repository scaffold: governance docs (LICENSE, DCO, NOTICE, CONTRIBUTING,
   SECURITY, CLAUDE.md), `docs/PROJECT.md` design brief, ADR-0001 through

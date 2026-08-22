@@ -29,6 +29,8 @@ const (
 	AgentVersionServiceName = "hived.v1alpha1.AgentVersionService"
 	// RunServiceName is the fully-qualified name of the RunService service.
 	RunServiceName = "hived.v1alpha1.RunService"
+	// ToolServiceName is the fully-qualified name of the ToolService service.
+	ToolServiceName = "hived.v1alpha1.ToolService"
 	// EventServiceName is the fully-qualified name of the EventService service.
 	EventServiceName = "hived.v1alpha1.EventService"
 )
@@ -76,6 +78,16 @@ const (
 	RunServiceListProcedure = "/hived.v1alpha1.RunService/List"
 	// RunServiceWatchProcedure is the fully-qualified name of the RunService's Watch RPC.
 	RunServiceWatchProcedure = "/hived.v1alpha1.RunService/Watch"
+	// RunServiceLogsProcedure is the fully-qualified name of the RunService's Logs RPC.
+	RunServiceLogsProcedure = "/hived.v1alpha1.RunService/Logs"
+	// ToolServiceApplyProcedure is the fully-qualified name of the ToolService's Apply RPC.
+	ToolServiceApplyProcedure = "/hived.v1alpha1.ToolService/Apply"
+	// ToolServiceGetProcedure is the fully-qualified name of the ToolService's Get RPC.
+	ToolServiceGetProcedure = "/hived.v1alpha1.ToolService/Get"
+	// ToolServiceListProcedure is the fully-qualified name of the ToolService's List RPC.
+	ToolServiceListProcedure = "/hived.v1alpha1.ToolService/List"
+	// ToolServiceWatchProcedure is the fully-qualified name of the ToolService's Watch RPC.
+	ToolServiceWatchProcedure = "/hived.v1alpha1.ToolService/Watch"
 	// EventServiceAppendProcedure is the fully-qualified name of the EventService's Append RPC.
 	EventServiceAppendProcedure = "/hived.v1alpha1.EventService/Append"
 	// EventServiceListProcedure is the fully-qualified name of the EventService's List RPC.
@@ -535,12 +547,15 @@ func (UnimplementedAgentVersionServiceHandler) Watch(context.Context, *connect.R
 
 // RunServiceClient is a client for the hived.v1alpha1.RunService service.
 type RunServiceClient interface {
-	// Apply persists the Run as RUN_PHASE_PENDING. Nothing schedules it in
-	// M0 — there is no Scheduler until M1.
+	// Apply persists the Run as RUN_PHASE_PENDING; the Scheduler owns every
+	// later phase transition.
 	Apply(context.Context, *connect.Request[v1alpha1.ApplyRunRequest]) (*connect.Response[v1alpha1.Run], error)
 	Get(context.Context, *connect.Request[v1alpha1.GetRunRequest]) (*connect.Response[v1alpha1.Run], error)
 	List(context.Context, *connect.Request[v1alpha1.ListRunsRequest]) (*connect.Response[v1alpha1.ListRunsResponse], error)
 	Watch(context.Context, *connect.Request[v1alpha1.WatchRunsRequest]) (*connect.ServerStreamForClient[v1alpha1.RunWatchEvent], error)
+	// Logs streams the Run's Cell output via the Executor. Returns
+	// CodeUnimplemented until the Executor and Scheduler exist.
+	Logs(context.Context, *connect.Request[v1alpha1.RunLogsRequest]) (*connect.ServerStreamForClient[v1alpha1.RunLogChunk], error)
 }
 
 // NewRunServiceClient constructs a client for the hived.v1alpha1.RunService service. By default, it
@@ -578,6 +593,12 @@ func NewRunServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(runServiceMethods.ByName("Watch")),
 			connect.WithClientOptions(opts...),
 		),
+		logs: connect.NewClient[v1alpha1.RunLogsRequest, v1alpha1.RunLogChunk](
+			httpClient,
+			baseURL+RunServiceLogsProcedure,
+			connect.WithSchema(runServiceMethods.ByName("Logs")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -587,6 +608,7 @@ type runServiceClient struct {
 	get   *connect.Client[v1alpha1.GetRunRequest, v1alpha1.Run]
 	list  *connect.Client[v1alpha1.ListRunsRequest, v1alpha1.ListRunsResponse]
 	watch *connect.Client[v1alpha1.WatchRunsRequest, v1alpha1.RunWatchEvent]
+	logs  *connect.Client[v1alpha1.RunLogsRequest, v1alpha1.RunLogChunk]
 }
 
 // Apply calls hived.v1alpha1.RunService.Apply.
@@ -609,14 +631,22 @@ func (c *runServiceClient) Watch(ctx context.Context, req *connect.Request[v1alp
 	return c.watch.CallServerStream(ctx, req)
 }
 
+// Logs calls hived.v1alpha1.RunService.Logs.
+func (c *runServiceClient) Logs(ctx context.Context, req *connect.Request[v1alpha1.RunLogsRequest]) (*connect.ServerStreamForClient[v1alpha1.RunLogChunk], error) {
+	return c.logs.CallServerStream(ctx, req)
+}
+
 // RunServiceHandler is an implementation of the hived.v1alpha1.RunService service.
 type RunServiceHandler interface {
-	// Apply persists the Run as RUN_PHASE_PENDING. Nothing schedules it in
-	// M0 — there is no Scheduler until M1.
+	// Apply persists the Run as RUN_PHASE_PENDING; the Scheduler owns every
+	// later phase transition.
 	Apply(context.Context, *connect.Request[v1alpha1.ApplyRunRequest]) (*connect.Response[v1alpha1.Run], error)
 	Get(context.Context, *connect.Request[v1alpha1.GetRunRequest]) (*connect.Response[v1alpha1.Run], error)
 	List(context.Context, *connect.Request[v1alpha1.ListRunsRequest]) (*connect.Response[v1alpha1.ListRunsResponse], error)
 	Watch(context.Context, *connect.Request[v1alpha1.WatchRunsRequest], *connect.ServerStream[v1alpha1.RunWatchEvent]) error
+	// Logs streams the Run's Cell output via the Executor. Returns
+	// CodeUnimplemented until the Executor and Scheduler exist.
+	Logs(context.Context, *connect.Request[v1alpha1.RunLogsRequest], *connect.ServerStream[v1alpha1.RunLogChunk]) error
 }
 
 // NewRunServiceHandler builds an HTTP handler from the service implementation. It returns the path
@@ -650,6 +680,12 @@ func NewRunServiceHandler(svc RunServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(runServiceMethods.ByName("Watch")),
 		connect.WithHandlerOptions(opts...),
 	)
+	runServiceLogsHandler := connect.NewServerStreamHandler(
+		RunServiceLogsProcedure,
+		svc.Logs,
+		connect.WithSchema(runServiceMethods.ByName("Logs")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/hived.v1alpha1.RunService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case RunServiceApplyProcedure:
@@ -660,6 +696,8 @@ func NewRunServiceHandler(svc RunServiceHandler, opts ...connect.HandlerOption) 
 			runServiceListHandler.ServeHTTP(w, r)
 		case RunServiceWatchProcedure:
 			runServiceWatchHandler.ServeHTTP(w, r)
+		case RunServiceLogsProcedure:
+			runServiceLogsHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -683,6 +721,158 @@ func (UnimplementedRunServiceHandler) List(context.Context, *connect.Request[v1a
 
 func (UnimplementedRunServiceHandler) Watch(context.Context, *connect.Request[v1alpha1.WatchRunsRequest], *connect.ServerStream[v1alpha1.RunWatchEvent]) error {
 	return connect.NewError(connect.CodeUnimplemented, errors.New("hived.v1alpha1.RunService.Watch is not implemented"))
+}
+
+func (UnimplementedRunServiceHandler) Logs(context.Context, *connect.Request[v1alpha1.RunLogsRequest], *connect.ServerStream[v1alpha1.RunLogChunk]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hived.v1alpha1.RunService.Logs is not implemented"))
+}
+
+// ToolServiceClient is a client for the hived.v1alpha1.ToolService service.
+type ToolServiceClient interface {
+	Apply(context.Context, *connect.Request[v1alpha1.ApplyToolRequest]) (*connect.Response[v1alpha1.Tool], error)
+	Get(context.Context, *connect.Request[v1alpha1.GetToolRequest]) (*connect.Response[v1alpha1.Tool], error)
+	List(context.Context, *connect.Request[v1alpha1.ListToolsRequest]) (*connect.Response[v1alpha1.ListToolsResponse], error)
+	Watch(context.Context, *connect.Request[v1alpha1.WatchToolsRequest]) (*connect.ServerStreamForClient[v1alpha1.ToolWatchEvent], error)
+}
+
+// NewToolServiceClient constructs a client for the hived.v1alpha1.ToolService service. By default,
+// it uses the Connect protocol with the binary Protobuf Codec, asks for gzipped responses, and
+// sends uncompressed requests. To use the gRPC or gRPC-Web protocols, supply the connect.WithGRPC()
+// or connect.WithGRPCWeb() options.
+//
+// The URL supplied here should be the base URL for the Connect or gRPC server (for example,
+// http://api.acme.com or https://acme.com/grpc).
+func NewToolServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) ToolServiceClient {
+	baseURL = strings.TrimRight(baseURL, "/")
+	toolServiceMethods := v1alpha1.File_hived_v1alpha1_service_proto.Services().ByName("ToolService").Methods()
+	return &toolServiceClient{
+		apply: connect.NewClient[v1alpha1.ApplyToolRequest, v1alpha1.Tool](
+			httpClient,
+			baseURL+ToolServiceApplyProcedure,
+			connect.WithSchema(toolServiceMethods.ByName("Apply")),
+			connect.WithClientOptions(opts...),
+		),
+		get: connect.NewClient[v1alpha1.GetToolRequest, v1alpha1.Tool](
+			httpClient,
+			baseURL+ToolServiceGetProcedure,
+			connect.WithSchema(toolServiceMethods.ByName("Get")),
+			connect.WithClientOptions(opts...),
+		),
+		list: connect.NewClient[v1alpha1.ListToolsRequest, v1alpha1.ListToolsResponse](
+			httpClient,
+			baseURL+ToolServiceListProcedure,
+			connect.WithSchema(toolServiceMethods.ByName("List")),
+			connect.WithClientOptions(opts...),
+		),
+		watch: connect.NewClient[v1alpha1.WatchToolsRequest, v1alpha1.ToolWatchEvent](
+			httpClient,
+			baseURL+ToolServiceWatchProcedure,
+			connect.WithSchema(toolServiceMethods.ByName("Watch")),
+			connect.WithClientOptions(opts...),
+		),
+	}
+}
+
+// toolServiceClient implements ToolServiceClient.
+type toolServiceClient struct {
+	apply *connect.Client[v1alpha1.ApplyToolRequest, v1alpha1.Tool]
+	get   *connect.Client[v1alpha1.GetToolRequest, v1alpha1.Tool]
+	list  *connect.Client[v1alpha1.ListToolsRequest, v1alpha1.ListToolsResponse]
+	watch *connect.Client[v1alpha1.WatchToolsRequest, v1alpha1.ToolWatchEvent]
+}
+
+// Apply calls hived.v1alpha1.ToolService.Apply.
+func (c *toolServiceClient) Apply(ctx context.Context, req *connect.Request[v1alpha1.ApplyToolRequest]) (*connect.Response[v1alpha1.Tool], error) {
+	return c.apply.CallUnary(ctx, req)
+}
+
+// Get calls hived.v1alpha1.ToolService.Get.
+func (c *toolServiceClient) Get(ctx context.Context, req *connect.Request[v1alpha1.GetToolRequest]) (*connect.Response[v1alpha1.Tool], error) {
+	return c.get.CallUnary(ctx, req)
+}
+
+// List calls hived.v1alpha1.ToolService.List.
+func (c *toolServiceClient) List(ctx context.Context, req *connect.Request[v1alpha1.ListToolsRequest]) (*connect.Response[v1alpha1.ListToolsResponse], error) {
+	return c.list.CallUnary(ctx, req)
+}
+
+// Watch calls hived.v1alpha1.ToolService.Watch.
+func (c *toolServiceClient) Watch(ctx context.Context, req *connect.Request[v1alpha1.WatchToolsRequest]) (*connect.ServerStreamForClient[v1alpha1.ToolWatchEvent], error) {
+	return c.watch.CallServerStream(ctx, req)
+}
+
+// ToolServiceHandler is an implementation of the hived.v1alpha1.ToolService service.
+type ToolServiceHandler interface {
+	Apply(context.Context, *connect.Request[v1alpha1.ApplyToolRequest]) (*connect.Response[v1alpha1.Tool], error)
+	Get(context.Context, *connect.Request[v1alpha1.GetToolRequest]) (*connect.Response[v1alpha1.Tool], error)
+	List(context.Context, *connect.Request[v1alpha1.ListToolsRequest]) (*connect.Response[v1alpha1.ListToolsResponse], error)
+	Watch(context.Context, *connect.Request[v1alpha1.WatchToolsRequest], *connect.ServerStream[v1alpha1.ToolWatchEvent]) error
+}
+
+// NewToolServiceHandler builds an HTTP handler from the service implementation. It returns the path
+// on which to mount the handler and the handler itself.
+//
+// By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
+// and JSON codecs. They also support gzip compression.
+func NewToolServiceHandler(svc ToolServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	toolServiceMethods := v1alpha1.File_hived_v1alpha1_service_proto.Services().ByName("ToolService").Methods()
+	toolServiceApplyHandler := connect.NewUnaryHandler(
+		ToolServiceApplyProcedure,
+		svc.Apply,
+		connect.WithSchema(toolServiceMethods.ByName("Apply")),
+		connect.WithHandlerOptions(opts...),
+	)
+	toolServiceGetHandler := connect.NewUnaryHandler(
+		ToolServiceGetProcedure,
+		svc.Get,
+		connect.WithSchema(toolServiceMethods.ByName("Get")),
+		connect.WithHandlerOptions(opts...),
+	)
+	toolServiceListHandler := connect.NewUnaryHandler(
+		ToolServiceListProcedure,
+		svc.List,
+		connect.WithSchema(toolServiceMethods.ByName("List")),
+		connect.WithHandlerOptions(opts...),
+	)
+	toolServiceWatchHandler := connect.NewServerStreamHandler(
+		ToolServiceWatchProcedure,
+		svc.Watch,
+		connect.WithSchema(toolServiceMethods.ByName("Watch")),
+		connect.WithHandlerOptions(opts...),
+	)
+	return "/hived.v1alpha1.ToolService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case ToolServiceApplyProcedure:
+			toolServiceApplyHandler.ServeHTTP(w, r)
+		case ToolServiceGetProcedure:
+			toolServiceGetHandler.ServeHTTP(w, r)
+		case ToolServiceListProcedure:
+			toolServiceListHandler.ServeHTTP(w, r)
+		case ToolServiceWatchProcedure:
+			toolServiceWatchHandler.ServeHTTP(w, r)
+		default:
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// UnimplementedToolServiceHandler returns CodeUnimplemented from all methods.
+type UnimplementedToolServiceHandler struct{}
+
+func (UnimplementedToolServiceHandler) Apply(context.Context, *connect.Request[v1alpha1.ApplyToolRequest]) (*connect.Response[v1alpha1.Tool], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hived.v1alpha1.ToolService.Apply is not implemented"))
+}
+
+func (UnimplementedToolServiceHandler) Get(context.Context, *connect.Request[v1alpha1.GetToolRequest]) (*connect.Response[v1alpha1.Tool], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hived.v1alpha1.ToolService.Get is not implemented"))
+}
+
+func (UnimplementedToolServiceHandler) List(context.Context, *connect.Request[v1alpha1.ListToolsRequest]) (*connect.Response[v1alpha1.ListToolsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("hived.v1alpha1.ToolService.List is not implemented"))
+}
+
+func (UnimplementedToolServiceHandler) Watch(context.Context, *connect.Request[v1alpha1.WatchToolsRequest], *connect.ServerStream[v1alpha1.ToolWatchEvent]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("hived.v1alpha1.ToolService.Watch is not implemented"))
 }
 
 // EventServiceClient is a client for the hived.v1alpha1.EventService service.

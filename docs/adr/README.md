@@ -39,3 +39,4 @@ just plain markdown files, one decision per file.
 | [0002](ADR-0002-identity-and-capability-tokens.md) | Identity and capability tokens | Draft |
 | [0003](ADR-0003-vibed-executor-contract.md) | vibeD executor contract | Draft |
 | [0004](ADR-0004-mind-memory-usage.md) | mindD memory usage | Draft |
+| [0005](ADR-0005-event-schema.md) | Event schema | Draft |

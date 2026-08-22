@@ -44,6 +44,10 @@ func runClient() v1alpha1connect.RunServiceClient {
 	return v1alpha1connect.NewRunServiceClient(http.DefaultClient, flags.server, clientOptions()...)
 }
 
+func toolClient() v1alpha1connect.ToolServiceClient {
+	return v1alpha1connect.NewToolServiceClient(http.DefaultClient, flags.server, clientOptions()...)
+}
+
 func eventClient() v1alpha1connect.EventServiceClient {
 	return v1alpha1connect.NewEventServiceClient(http.DefaultClient, flags.server, clientOptions()...)
 }

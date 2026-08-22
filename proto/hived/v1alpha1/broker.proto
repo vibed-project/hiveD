@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "google/protobuf/struct.proto";
+import "hived/v1alpha1/drone.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+// ToolBrokerService is how a Drone calls tools. The broker resolves the
+// name against the Run's AgentVersion.spec.tools, denies anything not
+// declared there, contacts the Tool's endpoint with the Colony's
+// credentials, records the call as an Event, and returns the result. The
+// Drone supplies only a name and arguments; it never holds an endpoint.
+service ToolBrokerService {
+  rpc ListRunTools(ListRunToolsRequest) returns (ListRunToolsResponse);
+  rpc CallTool(CallToolRequest) returns (CallToolResponse);
+}
+
+message ListRunToolsRequest {
+  string colony = 1;
+  string run = 2;
+}
+
+message ListRunToolsResponse {
+  repeated ToolDescriptor tools = 1;
+}
+
+message CallToolRequest {
+  string colony = 1;
+  string run = 2;
+  int32 attempt = 3;
+  int64 step = 4;
+  // CallId is the model-assigned tool call id. Together with step it makes
+  // a call idempotent across a Cell restart: the broker returns the
+  // recorded result of an identical earlier call instead of re-executing.
+  string call_id = 5;
+  string name = 6;
+  google.protobuf.Struct arguments = 7;
+}
+
+message CallToolResponse {
+  // Content is the tool's result as the model should see it.
+  google.protobuf.Struct content = 1;
+  bool is_error = 2;
+  // Replayed is true when the broker served a recorded result for this
+  // (run, step, call_id) rather than executing the tool again.
+  bool replayed = 3;
+}

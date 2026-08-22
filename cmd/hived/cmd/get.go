@@ -55,6 +55,12 @@ func getOne(ctx context.Context, kind, name string) error {
 			return err
 		}
 		return printObject(resp.Msg)
+	case "Tool":
+		resp, err := toolClient().Get(ctx, connect.NewRequest(&v1alpha1.GetToolRequest{Colony: flags.colony, Name: name}))
+		if err != nil {
+			return err
+		}
+		return printObject(resp.Msg)
 	default:
 		return fmt.Errorf("unknown kind %q", kind)
 	}
@@ -142,6 +148,26 @@ func listAll(ctx context.Context, kind string) error {
 			rows = append(rows, []string{r.Metadata.Colony, r.Metadata.Name, r.Spec.AgentRef, r.Status.Phase.String()})
 		}
 		printTable([]string{"COLONY", "NAME", "AGENT", "PHASE"}, rows)
+		return nil
+
+	case "Tool":
+		resp, err := toolClient().List(ctx, connect.NewRequest(&v1alpha1.ListToolsRequest{Options: opts}))
+		if err != nil {
+			return err
+		}
+		if flags.output != "table" {
+			for _, item := range resp.Msg.Items {
+				if err := printObject(item); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+		rows := make([][]string, 0, len(resp.Msg.Items))
+		for _, t := range resp.Msg.Items {
+			rows = append(rows, []string{t.Metadata.Colony, t.Metadata.Name, t.Spec.Type.String(), t.Spec.RiskClass})
+		}
+		printTable([]string{"COLONY", "NAME", "TYPE", "RISK"}, rows)
 		return nil
 
 	default:

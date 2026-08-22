@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "hived/v1alpha1/agent.proto";
+import "hived/v1alpha1/run.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+// DroneService is the Keeper-side API a Drone calls from inside its Cell.
+// It is deliberately narrow: the Drone fetches its manifest once, reports
+// progress, and reports completion. Policy decisions never flow through
+// here in the Drone's direction — the Keeper tells the Drone what to do
+// via ControlSignal; the Drone never asks whether something is allowed.
+//
+// Every RPC is authenticated with a Run-scoped token and carries the
+// attempt it belongs to; the Keeper rejects reports from a stale attempt
+// so a Cell that was declared lost cannot overwrite its replacement.
+service DroneService {
+  // Bootstrap exchanges the short-lived bootstrap token the Executor
+  // injected into the Cell for the Run manifest and the Run's working
+  // tokens. It succeeds at most once per attempt.
+  rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
+  // Heartbeat reports progress and receives pending control signals. The
+  // Drone calls it on a fixed interval and after every step.
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+  // Finish reports the terminal outcome. Finish is authoritative: a Cell
+  // that exits 0 without calling Finish is treated as lost.
+  rpc Finish(FinishRequest) returns (FinishResponse);
+}
+
+message BootstrapRequest {
+  string colony = 1;
+  string run = 2;
+  int32 attempt = 3;
+}
+
+message BootstrapResponse {
+  RunManifest manifest = 1;
+  // IdentityToken is the Run's PASETO identity token (ADR-0002), used for
+  // every subsequent Keeper call including the Model Gateway and Tool
+  // Broker.
+  string identity_token = 2;
+  // MemoryToken is the mindD capability token for this Run (ADR-0004).
+  string memory_token = 3;
+  // Resume is true when attempt > 1: the Drone must load its last
+  // checkpoint before taking any step.
+  bool resume = 4;
+  // CheckpointRef is the Keeper's last known checkpoint reference. It is
+  // informational; the checkpoint in memory is authoritative.
+  string checkpoint_ref = 5;
+}
+
+// RunManifest is everything a Drone needs to execute one attempt of a Run.
+// The Run's spec and the AgentVersion are frozen snapshots taken at
+// scheduling time; later edits do not affect a Run in flight.
+message RunManifest {
+  Run run = 1;
+  AgentVersion agent_version = 2;
+  string model_gateway_url = 3;
+  string tool_broker_url = 4;
+  MemoryConfig memory = 5;
+  // Tools are the resolved, schema-bearing descriptors of every Tool the
+  // AgentVersion declares. The Drone presents these to the model; it
+  // never learns the Tool's endpoint.
+  repeated ToolDescriptor tools = 6;
+}
+
+message MemoryConfig {
+  string endpoint = 1;
+  string kv_namespace = 2;
+  string episodic_namespace = 3;
+  // KeyPrefix is the application-level prefix for this Run's keys
+  // (run/<uid>/). Per ADR-0004 this organizes data and is not an auth
+  // boundary until mindD#64 lands.
+  string key_prefix = 4;
+  string session_id = 5;
+}
+
+message ToolDescriptor {
+  string name = 1;
+  string description = 2;
+  // InputSchema is the JSON Schema for the tool's arguments, as the model
+  // must see it.
+  google.protobuf.Struct input_schema = 3;
+}
+
+enum ControlSignal {
+  CONTROL_SIGNAL_UNSPECIFIED = 0;
+  CONTROL_SIGNAL_CANCEL = 1;
+  CONTROL_SIGNAL_PAUSE = 2;
+  CONTROL_SIGNAL_RESUME = 3;
+}
+
+message HeartbeatRequest {
+  string colony = 1;
+  string run = 2;
+  int32 attempt = 3;
+  int64 step = 4;
+  TokenUsage tokens = 5;
+  string checkpoint_ref = 6;
+  // Phase is the Drone's own view (RUNNING or PAUSED); the Keeper may
+  // disagree and its view wins.
+  RunPhase phase = 7;
+}
+
+message HeartbeatResponse {
+  repeated ControlSignal signals = 1;
+  // Refreshed tokens, set only when the Keeper rotated them. Empty means
+  // keep using the current ones.
+  string identity_token = 2;
+  string memory_token = 3;
+  google.protobuf.Timestamp server_time = 4;
+}
+
+message FinishRequest {
+  string colony = 1;
+  string run = 2;
+  int32 attempt = 3;
+  // Phase must be RUN_PHASE_SUCCEEDED or RUN_PHASE_FAILED.
+  RunPhase phase = 4;
+  google.protobuf.Struct result = 5;
+  string message = 6;
+  int64 step = 7;
+  TokenUsage tokens = 8;
+  string checkpoint_ref = 9;
+}
+
+message FinishResponse {}

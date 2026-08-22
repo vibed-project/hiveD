@@ -87,7 +87,18 @@ func applyOne(ctx context.Context, m manifest) error {
 		}
 		return printObject(resp.Msg)
 
+	case "Tool":
+		obj := &v1alpha1.Tool{}
+		if err := unmarshalOpts.Unmarshal(m.JSON, obj); err != nil {
+			return err
+		}
+		resp, err := toolClient().Apply(ctx, connect.NewRequest(&v1alpha1.ApplyToolRequest{Object: obj}))
+		if err != nil {
+			return err
+		}
+		return printObject(resp.Msg)
+
 	default:
-		return fmt.Errorf("unknown kind %q (want Colony, Agent, AgentVersion, or Run)", m.Kind)
+		return fmt.Errorf("unknown kind %q (want Colony, Agent, AgentVersion, Run, or Tool)", m.Kind)
 	}
 }

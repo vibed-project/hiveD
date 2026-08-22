@@ -25,22 +25,33 @@ use these words exactly, in code, docs, and UI, not synonyms:
 | Keeper | The control plane process. Binary `hived-keeper`. |
 | Drone | The per-Cell runtime binary. Binary `hived-drone`. |
 
-## Current milestone: M0 (foundations)
+## Current milestone: M1 (first colony)
 
-**In scope:** repo scaffold, ADR-0001–0004 (drafted), `proto/hived/v1alpha1`
-for Colony/Agent/AgentVersion/Run/Event, a Postgres-backed resource store,
-the Keeper's `apply/get/list/watch` API, the `hived` CLI skeleton
-(`apply`/`get`/`watch`/`events` wired; `run`/`logs`/`approve` are stubs),
-and a docker-compose dev loop.
+M0 (foundations) is complete and on `main`. M1 makes a Run actually
+execute, one work package at a time; each lands as its own PR and leaves
+`main` green and demoable.
+
+**In scope:** the Scheduler; the Executor interface with a `local-docker`
+implementation (raw Engine API over a unix socket, works on podman and
+docker); the `hived-drone` binary with the default agent loop,
+checkpoint/resume and the Drone ↔ Keeper contract (`DroneService`); the
+Model Gateway (OpenAI-compatible in, OpenAI-compatible out, plus a `fake`
+provider for tests); the Tool Broker with one MCP server and the built-in
+`spawn_run`; real PASETO v4.public issuance and verification (ADR-0002);
+mindD kv + episodic via vendored proto and a hand-written connect client
+(ADR-0004); the `Tool` resource; `hived logs --follow`; `examples/hello-agent`.
+**Definition of done:** kill the Cell mid-run and the Run resumes from its
+last checkpoint in a new Cell.
 
 **Out of scope — do not build these until told the milestone has moved:**
-Scheduler / reconciliation controllers, the Executor interface and any
-implementation (docker/vibeD/process), the `hived-drone` binary and its IPC
-contract, the Model Gateway, the Tool Broker, real PASETO token issuance
-(`internal/identity` is a no-op stub), real mindD integration or any mindD
-Go client code, the Python SDK, the Helm chart, `examples/`, the Keeper's
-MCP surface, and OpenAPI publication. If a task seems to require one of
-these, stop and flag it rather than reaching past M0 — check with the user
+the vibeD executor and lane hints, the Policy engine and approval flow
+(`hived approve` stays a stub; `Tool.spec.risk_class` is stored, not
+enforced), Sessions as a resource, the Keeper's MCP surface, the Python
+SDK, the Helm chart, streaming responses in the Model Gateway, a bidi
+Drone control stream (Heartbeat polling is the M1 contract), Postgres
+LISTEN/NOTIFY for Watch (the poller is sufficient for the Scheduler),
+OTel export, and the run inspector UI. If a task seems to require one of
+these, stop and flag it rather than reaching past M1 — check with the user
 before adding scope, and update this section when the milestone advances.
 
 ## Invariants

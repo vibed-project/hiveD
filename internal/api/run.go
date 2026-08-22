@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"connectrpc.com/connect"
 
@@ -10,9 +11,8 @@ import (
 )
 
 // RunHandler implements hivedv1alpha1connect.RunServiceHandler. Apply
-// persists a Run as RUN_PHASE_PENDING; nothing schedules it — there is no
-// Scheduler until M1. Callers should expect a Run to stay PENDING forever
-// against an M0 Keeper.
+// persists a Run as RUN_PHASE_PENDING with attempt 0; the Scheduler owns
+// every later transition and is the only writer of RunStatus.
 type RunHandler struct {
 	store store.ResourceStore
 }
@@ -38,8 +38,8 @@ func runToResource(r *v1alpha1.Run) (store.Resource, error) {
 	}
 	res.Spec = spec
 
-	// A freshly-applied Run always starts PENDING; the caller does not get
-	// to set an initial phase. There is no Scheduler in M0 to advance it.
+	// A freshly-applied Run always starts PENDING at attempt 0; the caller
+	// does not get to set any initial status. The Scheduler advances it.
 	status, err := marshalSpec(&v1alpha1.RunStatus{Phase: v1alpha1.RunPhase_RUN_PHASE_PENDING})
 	if err != nil {
 		return store.Resource{}, err
@@ -124,4 +124,11 @@ func (h *RunHandler) Watch(ctx context.Context, req *connect.Request[v1alpha1.Wa
 		}
 		return out, nil
 	}, stream.Send)
+}
+
+// Logs is the operator-facing log stream. It needs an Executor to read
+// Cell output from and a Scheduler to know the Run's current Cell; until
+// both exist it is honest about that rather than returning an empty stream.
+func (h *RunHandler) Logs(_ context.Context, _ *connect.Request[v1alpha1.RunLogsRequest], _ *connect.ServerStream[v1alpha1.RunLogChunk]) error {
+	return connect.NewError(connect.CodeUnimplemented, errors.New("api: Run logs are not available until the Executor and Scheduler exist"))
 }

@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package hived.v1alpha1;
+
+import "hived/v1alpha1/meta.proto";
+
+option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+
+enum ToolType {
+  TOOL_TYPE_UNSPECIFIED = 0;
+  // MCP: a Model Context Protocol server reached at spec.endpoint.
+  TOOL_TYPE_MCP = 1;
+  // BUILTIN: implemented inside the Tool Broker (spawn_run, wait_run, ...).
+  // spec.endpoint is empty; spec.builtin names the implementation.
+  TOOL_TYPE_BUILTIN = 2;
+  // AGENT: calling the tool spawns a child Run of spec.agent_ref.
+  TOOL_TYPE_AGENT = 3;
+}
+
+// Tool is a colony-scoped registration of something an Agent may call. An
+// AgentVersion references Tools by name in spec.tools; the Tool Broker
+// resolves those references and is the only component that ever contacts
+// spec.endpoint. The Drone never sees a Tool's endpoint or credentials.
+message Tool {
+  ObjectMeta metadata = 1;
+  ToolSpec spec = 2;
+  ToolStatus status = 3;
+}
+
+message ToolSpec {
+  ToolType type = 1;
+  string description = 2;
+  // Endpoint is the MCP server URL for TOOL_TYPE_MCP.
+  string endpoint = 3;
+  // Builtin names the broker-internal implementation for TOOL_TYPE_BUILTIN.
+  string builtin = 4;
+  // AgentRef names the Agent to spawn for TOOL_TYPE_AGENT.
+  string agent_ref = 5;
+  // RiskClass feeds policy: read | write | destructive | external-money.
+  // Policy evaluation is M2; the field is stored but not enforced in M1.
+  string risk_class = 6;
+}
+
+message ToolStatus {
+  repeated Condition conditions = 1;
+  int64 observed_generation = 2;
+}
