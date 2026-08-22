@@ -11,7 +11,7 @@ profile-gated placeholder service, not a live integration.
 `docs/PROJECT.md` §9 assumes hiveD can scope a Run's mindD capability
 token to a hierarchical path like `colony/<c>/agent/<a>/run/<r>` and
 `colony/<c>/session/<s>`. Checking that assumption against mindD
-(MemorySidecar) as it actually exists today surfaced a real gap:
+(formerly MemorySidecar) as it actually exists today surfaced a real gap:
 
 - mindD's PASETO v4 capability scope (`internal/auth`, `IssuePASETO`) is
   `{tenant string (required), agent string (optional), namespaces
@@ -96,7 +96,7 @@ private/internal-facing project referencing mindD in a public-facing
 mindD artifact).
 
 **Filed 2026-08-22 as
-[MemorySidecar#64](https://github.com/vibed-project/MemorySidecar/issues/64):**
+[mindD#64](https://github.com/vibed-project/mindD/issues/64):**
 "Key-prefix scoping for capability tokens". It proposes an optional
 `KeyPrefix []string` on the capability scope (claim `key_prefixes`),
 enforced next to `PermitsNamespace`: empty keeps today's behaviour
