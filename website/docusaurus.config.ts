@@ -5,7 +5,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 const config: Config = {
   title: 'hiveD',
   tagline: 'A control plane for defining, scheduling, governing and observing AI agents',
-  favicon: 'img/favicon.svg',
+  favicon: 'img/favicon.png',
 
   // GitHub Pages project site. This works with no DNS setup.
   //
@@ -66,6 +66,7 @@ const config: Config = {
   ],
 
   themeConfig: {
+    image: 'img/social-card.png',
     colorMode: {
       defaultMode: 'light',
       respectPrefersColorScheme: true,
@@ -74,7 +75,7 @@ const config: Config = {
       title: 'hiveD',
       logo: {
         alt: 'hiveD logo',
-        src: 'img/favicon.svg',
+        src: 'img/hived-logo.png',
       },
       items: [
         {
