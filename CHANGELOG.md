@@ -2,10 +2,38 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-hiveD is pre-1.0; no version has been tagged yet.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+hiveD is pre-1.0: the API surface under `proto/hived/v1alpha1` may still change
+between minor versions.
 
 ## [Unreleased]
+
+## [0.1.0] - 2026-08-23
+
+First tagged release. hiveD is a control plane that defines, schedules,
+governs and observes AI agents; at this tag the Keeper's resource API, the
+`hived` CLI and the Postgres-backed store are usable, and nothing executes an
+agent yet (see Known limitations).
+
+### Known limitations
+
+- **`List` is not tenant-scoped when `options.colony` is empty.** It returns
+  every Colony's resources. Authentication is a deliberate no-op stub in this
+  milestone (`internal/identity`), so there is no privilege boundary to cross
+  today, but `Principal.Colony` is not read anywhere: enabling real auth will
+  not close this by itself. Do not expose a v0.1.0 Keeper to untrusted
+  callers. See `SECURITY.md`.
+- No Scheduler or Executor exists, so a `Run` is created and stays `PENDING`.
+  `hived logs` and `hived approve` exit non-zero by design.
+- Writes do not check that the referenced Colony or Agent exists, so a typo
+  creates an orphaned resource.
+- `Watch` ignores `label_selector` (`List` honours it), holds a pool
+  connection while delivering, and swallows query errors while continuing to
+  emit bookmarks — a watcher cannot distinguish "idle" from "database down".
+- `hived watch` ignores `--output` and does not reconnect after a Keeper
+  restart.
+- All five ADRs are Draft; the contracts they describe may still change.
 
 ### Fixed
 
@@ -176,3 +204,6 @@ Scheduler/reconciliation, the Executor interface and implementations, the
 real PASETO token issuance, real mindD memory integration, the Python SDK,
 the Helm chart, and OpenAPI publication. See `CLAUDE.md` for the full
 scope and out-of-scope breakdown of the current milestone.
+
+[Unreleased]: https://github.com/vibed-project/hiveD/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/vibed-project/hiveD/releases/tag/v0.1.0
