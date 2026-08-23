@@ -40,3 +40,8 @@ hived-dev.yaml
 
 # GoReleaser output
 /dist/
+
+# Docusaurus docs site (website/)
+node_modules/
+website/build/
+website/.docusaurus/

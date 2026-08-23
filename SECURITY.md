@@ -1,13 +1,14 @@
 # Security Policy
 
 hiveD is a control plane for running AI agents with an explicit identity,
-policy, and audit model — see [docs/PROJECT.md](docs/PROJECT.md) §1–§3.
+policy, and audit model, see [docs/PROJECT.md](docs/PROJECT.md) sections 1 to 3.
 This document covers how to report a vulnerability and the security model
-the project is being built around. **hiveD is pre-alpha (M0)**: most of the
-security-relevant machinery described below (real token issuance, policy
-enforcement, executor egress control) is not implemented yet — see
-[docs/adr/](docs/adr/) for what is drafted vs. built, and treat this
-document as a statement of intent as much as current behavior.
+the project is being built around. **hiveD is pre-alpha**: v0.1.0 is tagged
+and M1 is in progress, but most of the security-relevant machinery described
+below (real token issuance, policy enforcement, executor egress control) is
+not implemented yet. See [docs/adr/](docs/adr/) for what is drafted versus
+built, and treat this document as a statement of intent as much as current
+behavior.
 
 ## Reporting a Vulnerability
 
