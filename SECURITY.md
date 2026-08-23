@@ -35,12 +35,24 @@ advisory unless you prefer to remain anonymous.
 
 ## Supported Versions
 
-hiveD is experimental and pre-1.0. Security fixes land on `main` only.
+hiveD is experimental and pre-1.0. Security fixes land on `main` and ship in
+the next tagged release; there are no backports to earlier tags.
 
 | Version | Supported |
 |---------|-----------|
-| `main`  | ✅ |
-| Tagged releases | ❌ (none cut yet) |
+| `main` | ✅ |
+| `v0.1.x` (latest tag) | ✅ |
+| Older tags | ❌ |
+
+### Known gap in v0.1.0
+
+`List` is not tenant-scoped when `options.colony` is empty: it returns every
+Colony's resources. Authentication is a deliberate no-op stub in this
+milestone, so there is no privilege boundary being bypassed today, but
+`Principal.Colony` is not consulted anywhere and enabling real auth will not
+close this on its own. Treat a v0.1.0 Keeper as single-tenant and do not
+expose it to untrusted callers. Tracked for the milestone that turns on
+identity; reports of *other* isolation gaps are still very welcome.
 
 ## Security Model
 

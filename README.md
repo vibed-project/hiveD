@@ -76,11 +76,27 @@ deploy/compose/     local dev docker-compose stack
 docs/adr/           architecture decision records
 ```
 
+## Install
+
+Pre-built binaries for linux, macOS and Windows (amd64 and arm64) are attached
+to each [release](https://github.com/vibed-project/hiveD/releases), with
+`checksums.txt`. With a Go toolchain:
+
+```bash
+go install github.com/vibed-project/hiveD/cmd/hived@latest
+```
+
+The Keeper also ships as a container image:
+
+```bash
+docker pull ghcr.io/vibed-project/hived-keeper:v0.1.0
+```
+
 ## Quickstart
 
 ```bash
 make compose-up      # Keeper + Postgres
-make build-cli        # bin/hived
+make build-cli       # bin/hived
 ```
 
 Manifests follow a Kubernetes-style envelope (`apiVersion`/`kind`/`metadata`/`spec`):
