@@ -56,7 +56,10 @@ func (h *ColonyHandler) Apply(ctx context.Context, req *connect.Request[v1alpha1
 	}
 	r, err := colonyToResource(obj)
 	if err != nil {
-		return nil, invalidArgument(err.Error())
+		// colonyToResource already returns a typed *connect.Error. Re-wrapping
+		// it doubled the code prefix ("invalid_argument: invalid_argument:")
+		// and reclassified a marshalSpec failure as the caller's fault.
+		return nil, err
 	}
 	saved, err := h.store.Apply(ctx, r, req.Msg.IfResourceVersion)
 	if err != nil {

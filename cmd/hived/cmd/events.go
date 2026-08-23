@@ -19,7 +19,9 @@ func newEventsCmd() *cobra.Command {
 			if flags.colony == "" {
 				return fmt.Errorf("--colony is required")
 			}
-			resp, err := eventClient().List(cmd.Context(), connect.NewRequest(&v1alpha1.ListEventsRequest{
+			ctx, cancel := commandContext(cmd.Context())
+			defer cancel()
+			resp, err := eventClient().List(ctx, connect.NewRequest(&v1alpha1.ListEventsRequest{
 				Colony:   flags.colony,
 				Run:      args[0],
 				SinceSeq: sinceSeq,

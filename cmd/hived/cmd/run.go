@@ -39,7 +39,9 @@ func newRunCmd() *cobra.Command {
 				inputStruct = s
 			}
 
-			resp, err := runClient().Apply(cmd.Context(), connect.NewRequest(&v1alpha1.ApplyRunRequest{
+			ctx, cancel := commandContext(cmd.Context())
+			defer cancel()
+			resp, err := runClient().Apply(ctx, connect.NewRequest(&v1alpha1.ApplyRunRequest{
 				Object: &v1alpha1.Run{
 					Metadata: &v1alpha1.ObjectMeta{Colony: flags.colony, Name: name},
 					Spec:     &v1alpha1.RunSpec{AgentRef: args[0], Input: inputStruct},
