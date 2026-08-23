@@ -9,6 +9,55 @@ hiveD is pre-1.0; no version has been tagged yet.
 
 ### Fixed
 
+- `hived apply -f` silently discarded manifests. Documents were split with a
+  `^---\s*$` regexp, so the ubiquitous `--- # comment` separator did not match
+  and everything after the first document was dropped while apply still exited
+  0. A three-Colony manifest created one Colony. Splitting now uses a real YAML
+  decoder, which also handles the `...` end-of-document marker and skips empty
+  or comment-only documents instead of failing the whole apply.
+- `hived get -o yaml` on a list emitted documents with no `---` separator, so a
+  YAML parser saw duplicate top-level keys and kept only the last item.
+  `-o json` emitted a bare sequence of objects, which is not valid JSON
+  (`Extra data`). Both now emit every item: a JSON array, and `---`-separated
+  YAML documents.
+- Every CLI command hung indefinitely against a server that accepted the
+  connection and never responded: all clients used `http.DefaultClient`
+  (no timeout) and commands ran on `context.Background()`. There is now a
+  `--timeout` flag (default 30s, 0 disables) applied as a context deadline to
+  unary commands and as dial/response-header bounds on the transport, so
+  `watch` streams stay open but are still protected from a black-hole server.
+- `--token` was never sent on streaming RPCs. `connect.UnaryInterceptorFunc`
+  has a no-op `WrapStreamingClient`, so `hived watch` sent no `Authorization`
+  header at all and would have failed auth on day one of M1.
+- Ctrl-C now cancels in-flight requests and streams: the CLI ran on a
+  background context with no signal handling, so `ExecuteContext` had nothing
+  to cancel.
+- Unknown manifest fields are rejected. A typo such as `dispalyName` was
+  silently discarded and apply created a resource with an empty spec, exiting
+  0.
+- `apiVersion` is validated. It was parsed and then never read anywhere, so a
+  future `v1beta1` manifest would have been silently decoded as `v1alpha1`.
+- apply errors no longer embed the whole manifest body, which put agent
+  instructions and tool config into CI logs; they name the kind, colony/name
+  and document position instead. A partial apply now reports how many
+  documents landed before the failure and how many were never attempted.
+- Directory applies are ordered by filename. `filepath.Glob` ran once per
+  extension, so every `.json` manifest applied after every `.yaml` one.
+- An invalid `--output` is rejected up front. The check lived in a code path
+  an empty list never reached, so `--output bogus` printed nothing and exited
+  0.
+- Errors printed twice (Cobra and `main` both wrote them).
+- `ColonyService.Apply` double-wrapped an already-typed connect error, so
+  validation failures surfaced as `invalid_argument: invalid_argument: ...`
+  and a marshalling failure was misreported as the caller's fault.
+
+### Added
+
+- Tests for the `hived` CLI, which previously had none: multi-document
+  parsing across every separator form, apiVersion/kind validation, error
+  redaction, directory ordering, and the JSON/YAML list encodings. The `race`
+  job and `make test-race` now cover `./...` rather than `./internal/...`.
+
 - Concurrent `Append` to the same Run silently dropped most events. `seq` was
   assigned with an unserialized `MAX(seq)+1`, so concurrent appenders computed
   the same value and `UNIQUE (colony, run, seq)` rejected all but one, with no

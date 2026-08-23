@@ -27,9 +27,19 @@ func newApplyCmd() *cobra.Command {
 			if len(manifests) == 0 {
 				return fmt.Errorf("%s: no manifests found", file)
 			}
-			for _, m := range manifests {
-				if err := applyOne(cmd.Context(), m); err != nil {
-					return fmt.Errorf("%s %q: %w", m.Kind, m.JSON, err)
+			for i, m := range manifests {
+				if err := applyOneWithTimeout(cmd.Context(), m); err != nil {
+					// Report what already landed. Apply is not atomic, so a
+					// failure halfway through used to leave the caller with
+					// no idea which documents had been applied.
+					if i > 0 {
+						_, _ = fmt.Fprintf(cmd.ErrOrStderr(),
+							"applied %d of %d document(s) before this failure; %d not attempted\n",
+							i, len(manifests), len(manifests)-i-1)
+					}
+					// m.String() names the resource; it never includes the
+					// document body, which carries instructions and config.
+					return fmt.Errorf("%s: %w", m, err)
 				}
 			}
 			return nil
@@ -39,7 +49,19 @@ func newApplyCmd() *cobra.Command {
 	return c
 }
 
-var unmarshalOpts = protojson.UnmarshalOptions{DiscardUnknown: true}
+// Unknown fields are an error: a typo like `dispalyName` used to be silently
+// dropped and apply would happily create a resource with an empty spec and
+// exit 0. kubectl rejects these too.
+var unmarshalOpts = protojson.UnmarshalOptions{DiscardUnknown: false}
+
+// applyOneWithTimeout bounds each document individually: a 100-document
+// manifest should not fail because the whole apply took longer than one
+// request's --timeout.
+func applyOneWithTimeout(ctx context.Context, m manifest) error {
+	ctx, cancel := commandContext(ctx)
+	defer cancel()
+	return applyOne(ctx, m)
+}
 
 func applyOne(ctx context.Context, m manifest) error {
 	switch m.Kind {

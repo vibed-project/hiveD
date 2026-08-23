@@ -34,7 +34,7 @@ test:
 	$(GO) test ./... -short -count=1
 
 test-race:
-	CGO_ENABLED=1 $(GO) test -race -short -count=1 ./internal/...
+	CGO_ENABLED=1 $(GO) test -race -short -count=1 ./...
 
 # Requires a reachable Postgres (`make compose-up`). HIVED_REQUIRE_PG makes an
 # unreachable one fail instead of skipping, so this target cannot report a

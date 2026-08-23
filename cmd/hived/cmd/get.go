@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
 
 	v1alpha1 "github.com/vibed-project/hiveD/gen/hived/v1alpha1"
 )
@@ -20,7 +21,8 @@ func newGetCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			ctx := cmd.Context()
+			ctx, cancel := commandContext(cmd.Context())
+			defer cancel()
 			if len(args) == 2 {
 				return getOne(ctx, kind, args[1])
 			}
@@ -76,12 +78,11 @@ func listAll(ctx context.Context, kind string) error {
 			return err
 		}
 		if flags.output != "table" {
+			items := make([]proto.Message, 0, len(resp.Msg.Items))
 			for _, item := range resp.Msg.Items {
-				if err := printObject(item); err != nil {
-					return err
-				}
+				items = append(items, item)
 			}
-			return nil
+			return printObjects(items)
 		}
 		rows := make([][]string, 0, len(resp.Msg.Items))
 		for _, c := range resp.Msg.Items {
@@ -96,12 +97,11 @@ func listAll(ctx context.Context, kind string) error {
 			return err
 		}
 		if flags.output != "table" {
+			items := make([]proto.Message, 0, len(resp.Msg.Items))
 			for _, item := range resp.Msg.Items {
-				if err := printObject(item); err != nil {
-					return err
-				}
+				items = append(items, item)
 			}
-			return nil
+			return printObjects(items)
 		}
 		rows := make([][]string, 0, len(resp.Msg.Items))
 		for _, a := range resp.Msg.Items {
@@ -116,12 +116,11 @@ func listAll(ctx context.Context, kind string) error {
 			return err
 		}
 		if flags.output != "table" {
+			items := make([]proto.Message, 0, len(resp.Msg.Items))
 			for _, item := range resp.Msg.Items {
-				if err := printObject(item); err != nil {
-					return err
-				}
+				items = append(items, item)
 			}
-			return nil
+			return printObjects(items)
 		}
 		rows := make([][]string, 0, len(resp.Msg.Items))
 		for _, av := range resp.Msg.Items {
@@ -136,12 +135,11 @@ func listAll(ctx context.Context, kind string) error {
 			return err
 		}
 		if flags.output != "table" {
+			items := make([]proto.Message, 0, len(resp.Msg.Items))
 			for _, item := range resp.Msg.Items {
-				if err := printObject(item); err != nil {
-					return err
-				}
+				items = append(items, item)
 			}
-			return nil
+			return printObjects(items)
 		}
 		rows := make([][]string, 0, len(resp.Msg.Items))
 		for _, r := range resp.Msg.Items {
@@ -156,12 +154,11 @@ func listAll(ctx context.Context, kind string) error {
 			return err
 		}
 		if flags.output != "table" {
+			items := make([]proto.Message, 0, len(resp.Msg.Items))
 			for _, item := range resp.Msg.Items {
-				if err := printObject(item); err != nil {
-					return err
-				}
+				items = append(items, item)
 			}
-			return nil
+			return printObjects(items)
 		}
 		rows := make([][]string, 0, len(resp.Msg.Items))
 		for _, t := range resp.Msg.Items {
