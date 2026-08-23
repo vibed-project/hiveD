@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/encoding/protojson"
 
-	v1alpha1 "github.com/hived-project/hived/gen/hived/v1alpha1"
+	v1alpha1 "github.com/vibed-project/hiveD/gen/hived/v1alpha1"
 )
 
 func newApplyCmd() *cobra.Command {

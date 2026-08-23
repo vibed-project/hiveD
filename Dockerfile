@@ -3,9 +3,12 @@
 # --- build stage --------------------------------------------------------------
 FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS build
 
-# TARGETOS / TARGETARCH are set automatically by `docker buildx build`.
-ARG TARGETOS=linux
-ARG TARGETARCH=amd64
+# TARGETOS / TARGETARCH are injected by BuildKit for each --platform.
+# Declare them WITHOUT defaults: assigning a default shadows the injected
+# value, which silently cross-compiles every platform for that default and
+# ships identical amd64 binaries under an arm64 manifest.
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /src
 
@@ -27,9 +30,9 @@ RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     set -eux; \
     LDFLAGS="-s -w \
-      -X github.com/hived-project/hived/internal/version.Version=${VERSION} \
-      -X github.com/hived-project/hived/internal/version.Commit=${COMMIT} \
-      -X github.com/hived-project/hived/internal/version.BuildDate=${BUILD_DATE}"; \
+      -X github.com/vibed-project/hiveD/internal/version.Version=${VERSION} \
+      -X github.com/vibed-project/hiveD/internal/version.Commit=${COMMIT} \
+      -X github.com/vibed-project/hiveD/internal/version.BuildDate=${BUILD_DATE}"; \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go build -trimpath -ldflags "${LDFLAGS}" -o /out/hived-keeper ./cmd/keeper; \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} \

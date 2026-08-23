@@ -7,7 +7,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/spf13/cobra"
 
-	v1alpha1 "github.com/hived-project/hived/gen/hived/v1alpha1"
+	v1alpha1 "github.com/vibed-project/hiveD/gen/hived/v1alpha1"
 )
 
 func newWatchCmd() *cobra.Command {

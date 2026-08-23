@@ -2086,7 +2086,7 @@ const file_hived_v1alpha1_service_proto_rawDesc = "" +
 	"\x06Append\x12\".hived.v1alpha1.AppendEventRequest\x1a\x15.hived.v1alpha1.Event\x12M\n" +
 	"\x04List\x12!.hived.v1alpha1.ListEventsRequest\x1a\".hived.v1alpha1.ListEventsResponse\x12D\n" +
 	"\x05Watch\x12\".hived.v1alpha1.WatchEventsRequest\x1a\x15.hived.v1alpha1.Event0\x01B\xbc\x01\n" +
-	"\x12com.hived.v1alpha1B\fServiceProtoP\x01Z?github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
+	"\x12com.hived.v1alpha1B\fServiceProtoP\x01Z?github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
 
 var (
 	file_hived_v1alpha1_service_proto_rawDescOnce sync.Once

@@ -7,7 +7,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	v1alpha1connect "github.com/hived-project/hived/gen/hived/v1alpha1/hivedv1alpha1connect"
+	v1alpha1connect "github.com/vibed-project/hiveD/gen/hived/v1alpha1/hivedv1alpha1connect"
 )
 
 // clientOptions attaches --token as a bearer token on every outbound

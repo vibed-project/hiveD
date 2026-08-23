@@ -8,7 +8,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1alpha1 "github.com/hived-project/hived/gen/hived/v1alpha1"
+	v1alpha1 "github.com/vibed-project/hiveD/gen/hived/v1alpha1"
 	http "net/http"
 	strings "strings"
 )

@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
 permissions:
@@ -93,7 +94,7 @@ jobs:
   container:
     runs-on: ubuntu-latest
     needs: [build, race, boundary, proto, lint, store]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     permissions:
       contents: read
       packages: write
@@ -106,22 +107,66 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Compute image tags
+      - name: Compute image tags and version
         id: tags
         env:
           OWNER: ${{ github.repository_owner }}
         run: |
           image="ghcr.io/${OWNER,,}/hived-keeper"
-          echo "sha_tag=${image}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
-          echo "latest_tag=${image}:latest" >> "$GITHUB_OUTPUT"
+          # On a tag build the version IS the tag; on main it is the commit.
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            version="${GITHUB_REF#refs/tags/}"
+          else
+            version="${GITHUB_SHA}"
+          fi
+          # Multi-line outputs must use the heredoc form; a bare newline in
+          # $GITHUB_OUTPUT is not parsed as a second value.
+          {
+            echo "tags<<EOF"
+            echo "${image}:${version}"
+            echo "${image}:latest"
+            echo "EOF"
+            echo "version=${version}"
+            echo "build_date=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          } >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: |
-            ${{ steps.tags.outputs.sha_tag }}
-            ${{ steps.tags.outputs.latest_tag }}
+          tags: ${{ steps.tags.outputs.tags }}
           build-args: |
-            VERSION=${{ github.sha }}
+            VERSION=${{ steps.tags.outputs.version }}
             COMMIT=${{ github.sha }}
+            BUILD_DATE=${{ steps.tags.outputs.build_date }}
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.tags.outputs.version }}
+            org.opencontainers.image.created=${{ steps.tags.outputs.build_date }}
+            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.title=hived-keeper
+            org.opencontainers.image.description=hiveD control plane (Keeper) and CLI
+
+  # Binaries + checksums + GitHub Release. Tags only: this is the job that
+  # makes `git push --tags` produce something a user can actually install.
+  release:
+    runs-on: ubuntu-latest
+    needs: [build, race, boundary, proto, lint, store, container]
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # goreleaser needs full history for the changelog
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

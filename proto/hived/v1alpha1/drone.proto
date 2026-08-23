@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 import "hived/v1alpha1/agent.proto";
 import "hived/v1alpha1/run.proto";
 
-option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+option go_package = "github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1";
 
 // DroneService is the Keeper-side API a Drone calls from inside its Cell.
 // It is deliberately narrow: the Drone fetches its manifest once, reports

@@ -5,7 +5,7 @@ package hived.v1alpha1;
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+option go_package = "github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1";
 
 // Event is append-only and per-Run. It deliberately does not embed
 // ObjectMeta and has no spec/status split — it is not a reconciled

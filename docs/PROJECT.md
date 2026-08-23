@@ -135,7 +135,7 @@ To let user code written in any language or framework run inside a Cell while th
 - Observability: OpenTelemetry traces/metrics/logs, Prometheus endpoint, structured logs (slog).
 - Packaging: single container image per binary, Helm chart, docker-compose for local dev (Keeper + Postgres + mindD + local-docker executor).
 - Licensing: Apache 2.0. Governance and DCO like vibeD.
-- Repo: `github.com/hived-project/hived` (monorepo for keeper, drone, cli, proto, sdk-python; docs site as in vibeD).
+- Repo: `github.com/vibed-project/hiveD` (monorepo for keeper, drone, cli, proto, sdk-python; docs site as in vibeD).
 Suggested layout:
 ```
 hived/

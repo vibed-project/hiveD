@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/hived-project/hived/internal/identity"
+	"github.com/vibed-project/hiveD/internal/identity"
 )
 
 var rpcTotal = promauto.NewCounterVec(prometheus.CounterOpts{

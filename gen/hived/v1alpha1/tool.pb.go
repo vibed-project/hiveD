@@ -310,7 +310,7 @@ const file_hived_v1alpha1_tool_proto_rawDesc = "" +
 	"\rTOOL_TYPE_MCP\x10\x01\x12\x15\n" +
 	"\x11TOOL_TYPE_BUILTIN\x10\x02\x12\x13\n" +
 	"\x0fTOOL_TYPE_AGENT\x10\x03B\xb9\x01\n" +
-	"\x12com.hived.v1alpha1B\tToolProtoP\x01Z?github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
+	"\x12com.hived.v1alpha1B\tToolProtoP\x01Z?github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
 
 var (
 	file_hived_v1alpha1_tool_proto_rawDescOnce sync.Once

@@ -1,12 +1,28 @@
 GO      := ./scripts/go-in-podman.sh go
 COMPOSE := podman compose -f deploy/compose/docker-compose.yaml
 
+# buf and goreleaser run from the host when installed, otherwise through the
+# pinned golang container (this environment has no host Go toolchain).
+BUF        := $(shell command -v buf 2>/dev/null || echo ./scripts/buf-in-podman.sh)
+GORELEASER := ./scripts/goreleaser-in-podman.sh
+
+# Build metadata injected into internal/version. A plain `make build` should
+# report something traceable, not the bare "dev" default.
+MODULE     := github.com/vibed-project/hiveD
+VERSION    ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+COMMIT     ?= $(shell git rev-parse HEAD 2>/dev/null || echo unknown)
+BUILD_DATE ?= $(shell date -u +%Y-%m-%dT%H:%M:%SZ)
+LDFLAGS    := -s -w \
+	-X $(MODULE)/internal/version.Version=$(VERSION) \
+	-X $(MODULE)/internal/version.Commit=$(COMMIT) \
+	-X $(MODULE)/internal/version.BuildDate=$(BUILD_DATE)
+
 .PHONY: build build-cli build-all
 build:
-	$(GO) build -o bin/hived-keeper ./cmd/keeper
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o bin/hived-keeper ./cmd/keeper
 
 build-cli:
-	$(GO) build -o bin/hived ./cmd/hived
+	$(GO) build -trimpath -ldflags "$(LDFLAGS)" -o bin/hived ./cmd/hived
 
 build-all: build build-cli
 
@@ -29,11 +45,11 @@ boundary:
 
 .PHONY: proto proto-lint proto-check
 proto:
-	buf generate
+	$(BUF) generate
 
 proto-lint:
-	buf lint
-	buf format --diff --exit-code
+	$(BUF) lint
+	$(BUF) format --diff --exit-code
 
 proto-check: proto
 	git diff --exit-code gen/
@@ -45,6 +61,16 @@ tidy:
 .PHONY: image
 image:
 	podman build -t localhost/hived:dev .
+
+.PHONY: release-check release-snapshot
+# Validate .goreleaser.yaml without publishing anything.
+release-check:
+	$(GORELEASER) check
+
+# Build every release artifact locally, exactly as a tag build would, but
+# without touching GitHub. Output lands in ./dist.
+release-snapshot:
+	$(GORELEASER) build --snapshot --clean
 
 .PHONY: compose-up compose-down compose-logs
 compose-up:

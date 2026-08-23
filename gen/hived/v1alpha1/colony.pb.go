@@ -323,7 +323,7 @@ const file_hived_v1alpha1_colony_proto_rawDesc = "" +
 	"conditions\x18\x01 \x03(\v2\x19.hived.v1alpha1.ConditionR\n" +
 	"conditions\x12/\n" +
 	"\x13observed_generation\x18\x02 \x01(\x03R\x12observedGenerationB\xbb\x01\n" +
-	"\x12com.hived.v1alpha1B\vColonyProtoP\x01Z?github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
+	"\x12com.hived.v1alpha1B\vColonyProtoP\x01Z?github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
 
 var (
 	file_hived_v1alpha1_colony_proto_rawDescOnce sync.Once

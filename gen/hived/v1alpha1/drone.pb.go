@@ -828,7 +828,7 @@ const file_hived_v1alpha1_drone_proto_rawDesc = "" +
 	"\tHeartbeat\x12 .hived.v1alpha1.HeartbeatRequest\x1a!.hived.v1alpha1.HeartbeatResponse\x12G\n" +
 	"\x06Finish\x12\x1d.hived.v1alpha1.FinishRequest\x1a\x1e.hived.v1alpha1.FinishResponseB\xba\x01\n" +
 	"\x12com.hived.v1alpha1B\n" +
-	"DroneProtoP\x01Z?github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
+	"DroneProtoP\x01Z?github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
 
 var (
 	file_hived_v1alpha1_drone_proto_rawDescOnce sync.Once

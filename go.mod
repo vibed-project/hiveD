@@ -1,4 +1,4 @@
-module github.com/hived-project/hived
+module github.com/vibed-project/hiveD
 
 go 1.26.0
 
