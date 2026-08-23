@@ -32,6 +32,8 @@ func mapStoreErr(err error) error {
 		return connect.NewError(connect.CodeAborted, err)
 	case errors.Is(err, store.ErrImmutable):
 		return connect.NewError(connect.CodeFailedPrecondition, err)
+	case errors.Is(err, store.ErrInvalidPageToken):
+		return connect.NewError(connect.CodeInvalidArgument, err)
 	default:
 		return connect.NewError(connect.CodeInternal, err)
 	}

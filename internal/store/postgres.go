@@ -93,7 +93,7 @@ func (s *PostgresStore) applyImmutable(ctx context.Context, r Resource) (Resourc
 	}
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO resources (kind, api_version, colony, name, generation, resource_version, labels, annotations, spec, status)
-		VALUES ($1, $2, $3, $4, 1, nextval('hived_resource_version'), $5, $6, $7, '{}'::jsonb)
+		VALUES ($1, $2, $3, $4, 1, hived_next_resource_version(), $5, $6, $7, '{}'::jsonb)
 		RETURNING `+resourceColumns,
 		r.Kind, apiVersion, r.Colony, r.Name, jsonbMap(r.Labels), jsonbMap(r.Annotations), jsonbBytes(r.Spec))
 	return scanResource(row)
@@ -106,15 +106,26 @@ func (s *PostgresStore) applyMutable(ctx context.Context, r Resource, ifResource
 	}
 	row := s.pool.QueryRow(ctx, `
 		INSERT INTO resources (kind, api_version, colony, name, generation, resource_version, labels, annotations, spec, status)
-		VALUES ($1, $2, $3, $4, 1, nextval('hived_resource_version'), $5, $6, $7, $8)
+		VALUES ($1, $2, $3, $4, 1, hived_next_resource_version(), $5, $6, $7, $8)
 		ON CONFLICT (kind, colony, name) DO UPDATE SET
 			generation = CASE WHEN resources.spec IS DISTINCT FROM EXCLUDED.spec
 				THEN resources.generation + 1 ELSE resources.generation END,
-			resource_version = nextval('hived_resource_version'),
+			-- Only advance the watch cursor when something actually changed.
+			-- An unconditional bump meant a controller that re-applies an
+			-- identical spec on every reconcile emitted a MODIFIED event on
+			-- every reconcile; one that reconciles on its own watch is then a
+			-- self-sustaining hot loop.
+			resource_version = CASE WHEN resources.spec IS DISTINCT FROM EXCLUDED.spec
+					OR resources.labels IS DISTINCT FROM EXCLUDED.labels
+					OR resources.annotations IS DISTINCT FROM EXCLUDED.annotations
+				THEN hived_next_resource_version() ELSE resources.resource_version END,
 			labels = EXCLUDED.labels,
 			annotations = EXCLUDED.annotations,
 			spec = EXCLUDED.spec,
-			updated_at = now(),
+			updated_at = CASE WHEN resources.spec IS DISTINCT FROM EXCLUDED.spec
+					OR resources.labels IS DISTINCT FROM EXCLUDED.labels
+					OR resources.annotations IS DISTINCT FROM EXCLUDED.annotations
+				THEN now() ELSE resources.updated_at END,
 			deleted_at = NULL
 		WHERE resources.deleted_at IS NULL
 			AND ($9::bigint IS NULL OR resources.resource_version = $9)
@@ -148,27 +159,41 @@ func (s *PostgresStore) Get(ctx context.Context, kind, colony, name string) (Res
 }
 
 func (s *PostgresStore) List(ctx context.Context, kind string, opts ListOptions) (ListResult, error) {
+	// The counter is transactional, so this reads the highest resource_version
+	// that is actually committed and visible. A sequence's last_value could
+	// report a value whose row had not committed yet (and reported 1 on a
+	// never-called sequence, which made Watch(since=1) skip the very first
+	// resource ever created).
 	var rv int64
-	if err := s.pool.QueryRow(ctx, `SELECT last_value FROM hived_resource_version`).Scan(&rv); err != nil {
+	if err := s.pool.QueryRow(ctx, `SELECT value FROM hived_resource_version_counter`).Scan(&rv); err != nil {
 		return ListResult{}, fmt.Errorf("store: snapshot resource version: %w", err)
 	}
 
-	pageSize := opts.PageSize
-	if pageSize <= 0 {
-		pageSize = 500
+	pageSize := clampPageSize(opts.PageSize)
+
+	afterColony, afterName, err := decodePageToken(opts.PageToken)
+	if err != nil {
+		return ListResult{}, err
 	}
 
+	// Paginate on (colony, name), not name alone: name is only unique per
+	// (kind, colony), so a name-only cursor skips every same-named resource
+	// in the colonies that sort after the one the cursor landed in.
+	//
+	// pageSize+1 is computed in int64: pageSize is int32, so MaxInt32+1 used
+	// to wrap negative and Postgres rejected the LIMIT outright.
 	rows, err := s.pool.Query(ctx, `
 		SELECT `+resourceColumns+`
 		FROM resources
 		WHERE kind = $1
 			AND ($2 = '' OR colony = $2)
 			AND deleted_at IS NULL
-			AND ($3 = '' OR name > $3)
-			AND labels @> $4::jsonb
-		ORDER BY name
-		LIMIT $5`,
-		kind, opts.Colony, opts.PageToken, jsonbMap(opts.LabelSelector), pageSize+1)
+			AND ($3::boolean IS NOT TRUE OR (colony, name) > ($4, $5))
+			AND labels @> $6::jsonb
+		ORDER BY colony, name
+		LIMIT $7`,
+		kind, opts.Colony, opts.PageToken != "", afterColony, afterName,
+		jsonbMap(opts.LabelSelector), int64(pageSize)+1)
 	if err != nil {
 		return ListResult{}, err
 	}
@@ -188,7 +213,8 @@ func (s *PostgresStore) List(ctx context.Context, kind string, opts ListOptions)
 
 	var nextPageToken string
 	if int32(len(items)) > pageSize {
-		nextPageToken = items[pageSize-1].Name
+		last := items[pageSize-1]
+		nextPageToken = encodePageToken(last.Colony, last.Name)
 		items = items[:pageSize]
 	}
 
@@ -198,7 +224,7 @@ func (s *PostgresStore) List(ctx context.Context, kind string, opts ListOptions)
 func (s *PostgresStore) ApplyStatus(ctx context.Context, r Resource) (Resource, error) {
 	row := s.pool.QueryRow(ctx, `
 		UPDATE resources
-		SET status = $4, resource_version = nextval('hived_resource_version'), updated_at = now()
+		SET status = $4, resource_version = hived_next_resource_version(), updated_at = now()
 		WHERE kind = $1 AND colony = $2 AND name = $3 AND deleted_at IS NULL
 		RETURNING `+resourceColumns,
 		r.Kind, r.Colony, r.Name, jsonbBytes(r.Status))
@@ -274,13 +300,42 @@ func (s *PostgresStore) Watch(ctx context.Context, kind string, opts ListOptions
 }
 
 func (s *PostgresStore) Append(ctx context.Context, e Event) (Event, error) {
-	row := s.pool.QueryRow(ctx, `
-		INSERT INTO events (resource_version, colony, run, seq, type, payload)
-		VALUES (nextval('hived_resource_version'), $1, $2,
+	// seq is assigned as MAX(seq)+1, a read-modify-write. Under READ
+	// COMMITTED, concurrent appenders to the same run all read the same MAX
+	// and all compute the same next value; UNIQUE (colony, run, seq) then
+	// rejects every one but the winner. Nothing retried, so a Run whose
+	// Worker reported from more than one goroutine silently lost the
+	// majority of its events.
+	//
+	// A transaction-scoped advisory lock keyed on (colony, run) serializes
+	// appends per run without taking a table lock and without a retry loop.
+	// Appends to different runs never contend.
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return Event{}, fmt.Errorf("store: begin append: %w", err)
+	}
+	defer func() { _ = tx.Rollback(ctx) }()
+
+	// The two-argument form takes a pair of int4 keys, so colony and run are
+	// hashed separately: no delimiter to escape and no way for one field's
+	// content to spill into the other's. A hash collision would only make two
+	// unrelated runs share a lock, never corrupt a sequence.
+	if _, err := tx.Exec(ctx,
+		`SELECT pg_advisory_xact_lock(hashtext($1), hashtext($2))`,
+		e.Colony, e.Run); err != nil {
+		return Event{}, fmt.Errorf("store: lock run event log: %w", err)
+	}
+
+	// ts was omitted from the column list entirely, so every event silently
+	// took the column default (ingestion time) and a caller-supplied
+	// timestamp was discarded. NULL still falls back to now().
+	row := tx.QueryRow(ctx, `
+		INSERT INTO events (resource_version, colony, run, seq, type, ts, payload)
+		VALUES (hived_next_resource_version(), $1, $2,
 			COALESCE((SELECT MAX(seq) FROM events WHERE colony = $1 AND run = $2), 0) + 1,
-			$3, $4)
+			$3, COALESCE($4, now()), $5)
 		RETURNING id, resource_version, colony, run, seq, type, ts, payload`,
-		e.Colony, e.Run, e.Type, jsonbBytes(e.Payload))
+		e.Colony, e.Run, e.Type, nullableTime(e.TS), jsonbBytes(e.Payload))
 
 	var (
 		id      int64
@@ -289,14 +344,24 @@ func (s *PostgresStore) Append(ctx context.Context, e Event) (Event, error) {
 	if err := row.Scan(&id, &e.ResourceVersion, &e.Colony, &e.Run, &e.Seq, &e.Type, &e.TS, &payload); err != nil {
 		return Event{}, err
 	}
+	if err := tx.Commit(ctx); err != nil {
+		return Event{}, fmt.Errorf("store: commit append: %w", err)
+	}
 	e.Payload = []byte(payload)
 	return e, nil
 }
 
-func (s *PostgresStore) ListEvents(ctx context.Context, colony, run string, sinceSeq int64, limit int32) ([]Event, error) {
-	if limit <= 0 {
-		limit = 500
+// nullableTime maps the zero time to SQL NULL so the caller can leave TS
+// unset and get the server clock.
+func nullableTime(t time.Time) *time.Time {
+	if t.IsZero() {
+		return nil
 	}
+	return &t
+}
+
+func (s *PostgresStore) ListEvents(ctx context.Context, colony, run string, sinceSeq int64, limit int32) ([]Event, error) {
+	limit = clampPageSize(limit)
 	rows, err := s.pool.Query(ctx, `
 		SELECT resource_version, colony, run, seq, type, ts, payload
 		FROM events

@@ -6,6 +6,9 @@ COMPOSE := podman compose -f deploy/compose/docker-compose.yaml
 BUF        := $(shell command -v buf 2>/dev/null || echo ./scripts/buf-in-podman.sh)
 GORELEASER := ./scripts/goreleaser-in-podman.sh
 
+# Postgres for `make test-integration`; override to point elsewhere.
+HIVED_TEST_PG_DSN ?= postgres://hived:hived@host.containers.internal:5432/hived?sslmode=disable
+
 # Build metadata injected into internal/version. A plain `make build` should
 # report something traceable, not the bare "dev" default.
 MODULE     := github.com/vibed-project/hiveD
@@ -33,8 +36,13 @@ test:
 test-race:
 	CGO_ENABLED=1 $(GO) test -race -short -count=1 ./internal/...
 
+# Requires a reachable Postgres (`make compose-up`). HIVED_REQUIRE_PG makes an
+# unreachable one fail instead of skipping, so this target cannot report a
+# false green. host.containers.internal is how the toolchain container reaches
+# a Postgres published on the host.
 test-integration:
-	$(GO) test -tags=integration -count=1 ./internal/store/...
+	HIVED_TEST_PG_DSN="$(HIVED_TEST_PG_DSN)" HIVED_REQUIRE_PG=1 \
+		$(GO) test -tags=integration -count=1 ./internal/store/...
 
 .PHONY: lint boundary
 lint: boundary
