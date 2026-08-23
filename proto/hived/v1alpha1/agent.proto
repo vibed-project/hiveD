@@ -5,7 +5,7 @@ package hived.v1alpha1;
 import "google/protobuf/duration.proto";
 import "hived/v1alpha1/meta.proto";
 
-option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+option go_package = "github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1";
 
 // Agent is the mutable envelope around a versioned agent definition. The
 // real spec (instructions, model, tools, ...) lives on AgentVersion, which

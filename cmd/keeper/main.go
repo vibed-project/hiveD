@@ -15,12 +15,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/jackc/pgx/v5/stdlib"
 
-	"github.com/hived-project/hived/internal/api"
-	"github.com/hived-project/hived/internal/config"
-	"github.com/hived-project/hived/internal/identity"
-	"github.com/hived-project/hived/internal/obs"
-	"github.com/hived-project/hived/internal/store"
-	"github.com/hived-project/hived/internal/version"
+	"github.com/vibed-project/hiveD/internal/api"
+	"github.com/vibed-project/hiveD/internal/config"
+	"github.com/vibed-project/hiveD/internal/identity"
+	"github.com/vibed-project/hiveD/internal/obs"
+	"github.com/vibed-project/hiveD/internal/store"
+	"github.com/vibed-project/hiveD/internal/version"
 )
 
 func main() {

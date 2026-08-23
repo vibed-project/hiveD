@@ -6,8 +6,8 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	v1alpha1 "github.com/hived-project/hived/gen/hived/v1alpha1"
-	"github.com/hived-project/hived/internal/store"
+	v1alpha1 "github.com/vibed-project/hiveD/gen/hived/v1alpha1"
+	"github.com/vibed-project/hiveD/internal/store"
 )
 
 // EventHandler implements hivedv1alpha1connect.EventServiceHandler.

@@ -2,13 +2,14 @@
 #
 # check-import-boundary.sh — assert this module stays self-contained.
 #
-# hiveD must reference only its own packages (github.com/hived-project/hived/...)
-# and third-party dependencies — never a sibling vibeD-project module
-# (github.com/vibed-project/*), which now includes mindD
-# (github.com/vibed-project/mindD). That keeps hiveD independently
-# buildable and stops an
-# accidental cross-repository dependency from creeping in ahead of the
-# real integration seam. See docs/adr/ADR-0004 for why the mindD
+# hiveD must reference only its own packages (github.com/vibed-project/hiveD/...)
+# and third-party dependencies — never any *other* module under the shared
+# github.com/vibed-project/ namespace, which now includes mindD
+# (github.com/vibed-project/mindD). hiveD lives in that namespace itself, so
+# the checks below match github.com/vibed-project/* and then subtract this
+# module's own import path (SELF). That keeps hiveD independently buildable
+# and stops an accidental cross-repository dependency from creeping in ahead
+# of the real integration seam. See docs/adr/ADR-0004 for why the mindD
 # integration goes through a hand-written client against mindD's public
 # proto, not a direct import of its module.
 #
@@ -18,7 +19,7 @@ set -euo pipefail
 # Move to the repository root regardless of where the script is invoked from.
 cd "$(dirname "$0")/.."
 
-SELF="github.com/hived-project/hived"
+SELF="github.com/vibed-project/hiveD"
 
 fail=0
 

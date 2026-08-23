@@ -16,8 +16,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	v1alpha1 "github.com/hived-project/hived/gen/hived/v1alpha1"
-	"github.com/hived-project/hived/internal/store"
+	v1alpha1 "github.com/vibed-project/hiveD/gen/hived/v1alpha1"
+	"github.com/vibed-project/hiveD/internal/store"
 )
 
 // mapStoreErr translates a store error into the connect error code the

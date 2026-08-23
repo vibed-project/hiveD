@@ -8,9 +8,9 @@ import (
 
 	"connectrpc.com/connect"
 
-	v1alpha1connect "github.com/hived-project/hived/gen/hived/v1alpha1/hivedv1alpha1connect"
-	"github.com/hived-project/hived/internal/identity"
-	"github.com/hived-project/hived/internal/store"
+	v1alpha1connect "github.com/vibed-project/hiveD/gen/hived/v1alpha1/hivedv1alpha1connect"
+	"github.com/vibed-project/hiveD/internal/identity"
+	"github.com/vibed-project/hiveD/internal/store"
 )
 
 // ReadyFunc reports whether the Keeper is ready to serve (e.g. the

@@ -301,7 +301,7 @@ const file_hived_v1alpha1_broker_proto_rawDesc = "" +
 	"\x11ToolBrokerService\x12Y\n" +
 	"\fListRunTools\x12#.hived.v1alpha1.ListRunToolsRequest\x1a$.hived.v1alpha1.ListRunToolsResponse\x12M\n" +
 	"\bCallTool\x12\x1f.hived.v1alpha1.CallToolRequest\x1a .hived.v1alpha1.CallToolResponseB\xbb\x01\n" +
-	"\x12com.hived.v1alpha1B\vBrokerProtoP\x01Z?github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
+	"\x12com.hived.v1alpha1B\vBrokerProtoP\x01Z?github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1\xa2\x02\x03HXX\xaa\x02\x0eHived.V1alpha1\xca\x02\x0eHived\\V1alpha1\xe2\x02\x1aHived\\V1alpha1\\GPBMetadata\xea\x02\x0fHived::V1alpha1b\x06proto3"
 
 var (
 	file_hived_v1alpha1_broker_proto_rawDescOnce sync.Once

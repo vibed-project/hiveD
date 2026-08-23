@@ -37,3 +37,6 @@ hived-dev.yaml
 /.gocache/
 /.gomodcache/
 /.gotools/
+
+# GoReleaser output
+/dist/

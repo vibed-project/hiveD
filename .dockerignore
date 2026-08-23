@@ -3,6 +3,8 @@
 bin/
 .gocache/
 .gomodcache/
+.gotools/
+dist/
 docs/
 *.md
 !README.md

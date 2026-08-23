@@ -10,7 +10,7 @@ import "hived/v1alpha1/meta.proto";
 import "hived/v1alpha1/run.proto";
 import "hived/v1alpha1/tool.proto";
 
-option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+option go_package = "github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1";
 
 // --- Colony ---
 

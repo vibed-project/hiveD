@@ -91,7 +91,8 @@ internal/obs/      slog + Prometheus + OTel wiring
 internal/version/  ldflags-injected version info
 proto/hived/v1alpha1/  resource + service definitions — source of truth
 gen/               generated Go code from proto/ — never hand-edit
-scripts/           check-import-boundary.sh, go-in-podman.sh
+scripts/           check-import-boundary.sh, go-in-podman.sh,
+                   buf-in-podman.sh, goreleaser-in-podman.sh
 deploy/compose/    local dev docker-compose stack
 ```
 

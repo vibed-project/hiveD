@@ -4,7 +4,7 @@ package hived.v1alpha1;
 
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/hived-project/hived/gen/hived/v1alpha1;hivedv1alpha1";
+option go_package = "github.com/vibed-project/hiveD/gen/hived/v1alpha1;hivedv1alpha1";
 
 // ObjectMeta is embedded in every resource kind that follows spec/status
 // conventions (Colony, Agent, AgentVersion, Run). Event does not embed it —

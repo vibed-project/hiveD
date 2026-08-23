@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	v1alpha1 "github.com/hived-project/hived/gen/hived/v1alpha1"
+	v1alpha1 "github.com/vibed-project/hiveD/gen/hived/v1alpha1"
 )
 
 func newRunCmd() *cobra.Command {

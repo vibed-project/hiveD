@@ -14,9 +14,12 @@ document as a statement of intent as much as current behavior.
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
 Report suspected vulnerabilities privately to the maintainers via
-[GitHub's private security advisory](https://github.com/hived-project/hived/security/advisories/new)
-("Report a vulnerability"). If you cannot use that channel, email the
-maintainers at **security@hived-project.dev**.
+[GitHub's private security advisory](https://github.com/vibed-project/hiveD/security/advisories/new)
+("Report a vulnerability"). That is the only private channel we monitor.
+
+If you cannot use GitHub Security Advisories, open a public issue that says
+only that you have a security report and asks for a private contact — no
+details, no reproduction steps — and a maintainer will follow up privately.
 
 Please include, where you can:
 

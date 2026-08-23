@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hived-project/hived/cmd/hived/cmd"
+	"github.com/vibed-project/hiveD/cmd/hived/cmd"
 )
 
 func main() {
