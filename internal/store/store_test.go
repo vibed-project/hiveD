@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"errors"
+	"math"
+	"sync"
 	"testing"
 	"time"
 )
@@ -83,6 +85,13 @@ func runResourceStoreConformance(t *testing.T, newStore func(t *testing.T) Resou
 		}
 		if r2.Generation != r1.Generation {
 			t.Fatalf("Generation changed on identical spec re-apply: %d -> %d", r1.Generation, r2.Generation)
+		}
+		// The test name promised this all along but only Generation was
+		// asserted. An unconditional resource_version bump makes every
+		// re-applying controller emit a MODIFIED event to every watcher.
+		if r2.ResourceVersion != r1.ResourceVersion {
+			t.Fatalf("ResourceVersion changed on identical spec re-apply: %d -> %d",
+				r1.ResourceVersion, r2.ResourceVersion)
 		}
 	})
 
@@ -177,6 +186,99 @@ func runResourceStoreConformance(t *testing.T, newStore func(t *testing.T) Resou
 		}
 	})
 
+	t.Run("list paginates across colonies without dropping same-named resources", func(t *testing.T) {
+		s := newStore(t)
+		ctx := context.Background()
+
+		// name is unique only per (kind, colony). A cursor keyed on name
+		// alone skipped every same-named resource in later colonies.
+		colonies := []string{"c1", "c2", "c3"}
+		for _, c := range colonies {
+			if _, err := s.Apply(ctx, Resource{Kind: "Agent", Colony: c, Name: "bot", Spec: []byte(`{}`)}, nil); err != nil {
+				t.Fatalf("Apply %s/bot: %v", c, err)
+			}
+		}
+
+		seen := map[string]bool{}
+		token := ""
+		for page := 0; page < 10; page++ {
+			res, err := s.List(ctx, "Agent", ListOptions{PageSize: 1, PageToken: token})
+			if err != nil {
+				t.Fatalf("List page %d: %v", page, err)
+			}
+			for _, item := range res.Items {
+				key := item.Colony + "/" + item.Name
+				if seen[key] {
+					t.Fatalf("page %d returned %s twice", page, key)
+				}
+				seen[key] = true
+			}
+			token = res.NextPageToken
+			if token == "" {
+				break
+			}
+		}
+		if len(seen) != len(colonies) {
+			t.Fatalf("paginated over %d resources, want %d (got %v)", len(seen), len(colonies), seen)
+		}
+	})
+
+	t.Run("list watermark lets a watcher see the first resource ever created", func(t *testing.T) {
+		s := newStore(t)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		// meta.proto promises List-then-Watch(since=resource_version) misses
+		// nothing. On an empty store the watermark used to equal the version
+		// the first resource would go on to receive, so it was never
+		// delivered.
+		empty, err := s.List(ctx, "Colony", ListOptions{})
+		if err != nil {
+			t.Fatalf("List (empty): %v", err)
+		}
+
+		ch, err := s.Watch(ctx, "Colony", ListOptions{}, empty.ResourceVersion)
+		if err != nil {
+			t.Fatalf("Watch: %v", err)
+		}
+		if _, err := s.Apply(ctx, Resource{Kind: "Colony", Name: "first-ever", Spec: []byte(`{}`)}, nil); err != nil {
+			t.Fatalf("Apply: %v", err)
+		}
+
+		ev := nextNonBookmark(t, ch)
+		if ev.Object.Name != "first-ever" {
+			t.Fatalf("watch delivered %q, want first-ever", ev.Object.Name)
+		}
+	})
+
+	t.Run("page size is clamped rather than overflowing", func(t *testing.T) {
+		s := newStore(t)
+		ctx := context.Background()
+
+		if _, err := s.Apply(ctx, Resource{Kind: "Colony", Name: "acme", Spec: []byte(`{}`)}, nil); err != nil {
+			t.Fatalf("Apply: %v", err)
+		}
+		// PageSize is int32 off the wire; pageSize+1 used to wrap negative at
+		// MaxInt32 and Postgres rejected the resulting LIMIT.
+		for _, size := range []int32{math.MaxInt32, math.MaxInt32 - 1, MaxPageSize + 1, -5} {
+			res, err := s.List(ctx, "Colony", ListOptions{PageSize: size})
+			if err != nil {
+				t.Fatalf("List(PageSize=%d): %v", size, err)
+			}
+			if len(res.Items) != 1 {
+				t.Fatalf("List(PageSize=%d) returned %d items, want 1", size, len(res.Items))
+			}
+		}
+	})
+
+	t.Run("malformed page token is rejected as such", func(t *testing.T) {
+		s := newStore(t)
+		_, err := s.List(context.Background(), "Colony", ListOptions{PageToken: "!!!not-base64!!!"})
+		if !errors.Is(err, ErrInvalidPageToken) {
+			t.Fatalf("List with bad page token: err = %v, want ErrInvalidPageToken", err)
+		}
+	})
+
 	t.Run("watch delivers added then modified", func(t *testing.T) {
 		s := newStore(t)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -251,6 +353,90 @@ func runEventStoreConformance(t *testing.T, newStore func(t *testing.T) EventSto
 		}
 		if eOther.Seq != 1 {
 			t.Fatalf("run-2 first seq = %d, want 1", eOther.Seq)
+		}
+	})
+
+	t.Run("concurrent appends to one run all persist with unique seq", func(t *testing.T) {
+		s := newStore(t)
+		ctx := context.Background()
+
+		// seq was assigned as MAX(seq)+1 with no serialization, so concurrent
+		// appenders all computed the same value and UNIQUE (colony, run, seq)
+		// rejected all but one. Nothing retried, so the events were simply
+		// lost. Measured before the fix: 200 concurrent appends, 78 persisted.
+		const appenders = 16
+		const perAppender = 10
+
+		var wg sync.WaitGroup
+		errCh := make(chan error, appenders*perAppender)
+		for i := 0; i < appenders; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for j := 0; j < perAppender; j++ {
+					_, err := s.Append(ctx, Event{Colony: "acme", Run: "r1", Type: "test.event"})
+					if err != nil {
+						errCh <- err
+						return
+					}
+				}
+			}()
+		}
+		wg.Wait()
+		close(errCh)
+		for err := range errCh {
+			t.Fatalf("Append: %v", err)
+		}
+
+		got, err := s.ListEvents(ctx, "acme", "r1", 0, MaxPageSize)
+		if err != nil {
+			t.Fatalf("ListEvents: %v", err)
+		}
+		want := appenders * perAppender
+		if len(got) != want {
+			t.Fatalf("persisted %d events, want %d", len(got), want)
+		}
+		seqs := map[int64]bool{}
+		for _, e := range got {
+			if seqs[e.Seq] {
+				t.Fatalf("duplicate seq %d", e.Seq)
+			}
+			seqs[e.Seq] = true
+		}
+		for i := int64(1); i <= int64(want); i++ {
+			if !seqs[i] {
+				t.Fatalf("seq %d missing; sequence has a gap", i)
+			}
+		}
+	})
+
+	t.Run("append preserves a caller-supplied timestamp", func(t *testing.T) {
+		s := newStore(t)
+		ctx := context.Background()
+
+		// ts was omitted from the INSERT column list, so a Worker replaying
+		// buffered events after a partition had every timestamp rewritten to
+		// ingestion time.
+		want := time.Date(2026, 3, 4, 5, 6, 7, 0, time.UTC)
+		got, err := s.Append(ctx, Event{Colony: "acme", Run: "r1", Type: "test.event", TS: want})
+		if err != nil {
+			t.Fatalf("Append: %v", err)
+		}
+		if !got.TS.UTC().Equal(want) {
+			t.Fatalf("TS = %s, want %s", got.TS.UTC(), want)
+		}
+	})
+
+	t.Run("append defaults the timestamp when the caller leaves it unset", func(t *testing.T) {
+		s := newStore(t)
+		before := time.Now().Add(-time.Minute)
+
+		got, err := s.Append(context.Background(), Event{Colony: "acme", Run: "r1", Type: "test.event"})
+		if err != nil {
+			t.Fatalf("Append: %v", err)
+		}
+		if got.TS.Before(before) {
+			t.Fatalf("TS = %s, want a server-assigned time after %s", got.TS, before)
 		}
 	})
 

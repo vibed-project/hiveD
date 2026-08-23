@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"maps"
 	"slices"
+	"strings"
 	"sync"
 	"time"
 )
@@ -82,8 +83,16 @@ func (m *MemoryStore) Apply(_ context.Context, r Resource, ifResourceVersion *in
 	if out.APIVersion == "" {
 		out.APIVersion = DefaultAPIVersion
 	}
-	out.ResourceVersion = m.nextSeq()
-	out.UpdatedAt = now
+
+	// Mirror PostgresStore: only a real change advances resource_version (and
+	// therefore only a real change wakes watchers). Re-applying an identical
+	// manifest must be invisible on the watch stream.
+	changed := true
+	if exists {
+		changed = !jsonEqual(existing.Spec, r.Spec) ||
+			!maps.Equal(existing.Labels, r.Labels) ||
+			!maps.Equal(existing.Annotations, r.Annotations)
+	}
 
 	if exists {
 		out.UID = existing.UID
@@ -96,14 +105,25 @@ func (m *MemoryStore) Apply(_ context.Context, r Resource, ifResourceVersion *in
 		if out.Status == nil {
 			out.Status = existing.Status
 		}
+		if changed {
+			out.ResourceVersion = m.nextSeq()
+			out.UpdatedAt = now
+		} else {
+			out.ResourceVersion = existing.ResourceVersion
+			out.UpdatedAt = existing.UpdatedAt
+		}
 	} else {
 		out.UID = newUID()
 		out.CreatedAt = now
 		out.Generation = 1
+		out.ResourceVersion = m.nextSeq()
+		out.UpdatedAt = now
 	}
 
 	m.resources[key] = out
-	m.log = append(m.log, logEntry{r.Kind, r.Colony, r.Name, out.ResourceVersion})
+	if changed {
+		m.log = append(m.log, logEntry{r.Kind, r.Colony, r.Name, out.ResourceVersion})
+	}
 	return cloneResource(out), nil
 }
 
@@ -135,16 +155,36 @@ func (m *MemoryStore) List(_ context.Context, kind string, opts ListOptions) (Li
 		}
 		items = append(items, cloneResource(r))
 	}
+	// Sort and paginate on (colony, name) exactly as PostgresStore does.
+	// This store previously ignored PageSize/PageToken completely, so the
+	// conformance suite could not exercise pagination at all and the
+	// name-only cursor bug in PostgresStore went unnoticed.
 	slices.SortFunc(items, func(a, b Resource) int {
-		if a.Name < b.Name {
-			return -1
+		if c := strings.Compare(a.Colony, b.Colony); c != 0 {
+			return c
 		}
-		if a.Name > b.Name {
-			return 1
-		}
-		return 0
+		return strings.Compare(a.Name, b.Name)
 	})
-	return ListResult{Items: items, ResourceVersion: m.seq}, nil
+
+	afterColony, afterName, err := decodePageToken(opts.PageToken)
+	if err != nil {
+		return ListResult{}, err
+	}
+	if opts.PageToken != "" {
+		items = slices.DeleteFunc(items, func(r Resource) bool {
+			return r.Colony < afterColony || (r.Colony == afterColony && r.Name <= afterName)
+		})
+	}
+
+	pageSize := clampPageSize(opts.PageSize)
+	var nextPageToken string
+	if int32(len(items)) > pageSize {
+		last := items[pageSize-1]
+		nextPageToken = encodePageToken(last.Colony, last.Name)
+		items = items[:pageSize]
+	}
+
+	return ListResult{Items: items, NextPageToken: nextPageToken, ResourceVersion: m.seq}, nil
 }
 
 func matchesLabels(labels, selector map[string]string) bool {
@@ -259,7 +299,7 @@ func (m *MemoryStore) ListEvents(_ context.Context, colony, run string, sinceSeq
 	for _, e := range m.events {
 		if e.Colony == colony && e.Run == run && e.Seq > sinceSeq {
 			out = append(out, e)
-			if limit > 0 && int32(len(out)) >= limit {
+			if int32(len(out)) >= clampPageSize(limit) {
 				break
 			}
 		}
