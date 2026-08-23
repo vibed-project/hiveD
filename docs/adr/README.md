@@ -1,6 +1,6 @@
 # Architecture Decision Records
 
-hiveD records cross-cutting architectural decisions as ADRs — no tooling,
+hiveD records cross-cutting architectural decisions as ADRs: no tooling,
 just plain markdown files, one decision per file.
 
 ## Convention
@@ -23,13 +23,13 @@ just plain markdown files, one decision per file.
 
 - A decision that reverses or replaces an earlier one gets a **new** ADR
   number; the old one's Status line is updated to point at it. ADRs are
-  never edited to retroactively change what was decided — only their
+  never edited to retroactively change what was decided, only their
   Status and, where useful, a short "Update" note at the bottom.
 - Write a new ADR (or update an existing Draft one before it's built)
   whenever a change establishes or alters a contract another component
   depends on: identity/token shape, an executor contract, memory usage,
   event schema, policy language, API style. Don't write one for an
-  ordinary implementation detail — see `CLAUDE.md` for the cutoff.
+  ordinary implementation detail. See `CLAUDE.md` for the cutoff.
 
 ## Index
 

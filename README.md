@@ -1,11 +1,16 @@
 # hiveD
 
-**Status: pre-alpha (M0).** hiveD is a standalone, open-source control
-plane that defines, schedules, governs, and observes AI agents — running
-them inside isolated sandboxes (vibeD by default) and giving them durable
-memory (mindD by default).
+**Status: pre-alpha. v0.1.0 released, M1 in progress.** hiveD is a
+standalone, open-source control plane that defines, schedules, governs, and
+observes AI agents, running them inside isolated sandboxes (vibeD by default)
+and giving them durable memory (mindD by default).
+
+The resource API and the `hived` CLI work. There is no Scheduler or Executor
+yet, so a Run is created and stays `PENDING`.
 
 > vibeD builds the cells, mindD keeps the memory, hiveD runs the colony.
+
+**Documentation: https://vibed-project.github.io/hiveD/**
 
 See [docs/PROJECT.md](docs/PROJECT.md) for the full design brief and
 [docs/adr/](docs/adr/) for the architecture decisions behind it.

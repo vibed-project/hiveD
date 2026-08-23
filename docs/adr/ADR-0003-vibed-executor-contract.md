@@ -1,14 +1,14 @@
 # ADR-0003: vibeD executor contract
 
 ## Status
-Draft — contract only. No code ships against this ADR in M0; the vibeD
+Draft. Contract only. No code ships against this ADR in M0; the vibeD
 Executor implementation is targeted for M2. This ADR exists now so the M0
 proto (`Run.spec.executorHint`) doesn't need a breaking change later.
 
 ## Context
 
 hiveD stays independent of vibeD through the `Executor` interface (see
-`docs/PROJECT.md` §7), but vibeD is the default, best-supported Executor —
+`docs/PROJECT.md` §7), but vibeD is the default, best-supported Executor,
 the one that provisions a Cell as a Kata + Firecracker microVM (general
 lane) or a fast-start sandbox (fast lane). Pinning down what the vibeD
 Executor actually hands to a Cell, and what it expects back, needs to
@@ -18,12 +18,13 @@ Executor (M2) are built against the same assumptions from the start.
 ## Decision
 
 - **Artifact layout delivered into the Cell:**
-  - `/drone` — the `hived-drone` binary.
-  - `/app` — the agent bundle: rendered instructions, tool manifests, and
-    (for `runtime.loop: custom`) the user's entrypoint code/package.
-  - `/run.json` — the frozen Run spec plus the resolved AgentVersion
+  - `/drone`: the `hived-drone` binary.
+  - `/app`: the agent bundle, containing rendered instructions, tool
+    manifests, and (for `runtime.loop: custom`) the user's entrypoint
+    code/package.
+  - `/run.json`: the frozen Run spec plus the resolved AgentVersion
     snapshot plus a *reference* to the identity token (never the raw
-    signing material — see below).
+    signing material; see below).
 - **Lane hint, not a lane guarantee.** `Run.spec.executorHint` (and the
   AgentVersion's `runtime.lane` hint) map to vibeD's classifier hint
   (`fast` → workerd/static lane, `general` → Kata + Firecracker), but the
@@ -35,7 +36,7 @@ Executor (M2) are built against the same assumptions from the start.
   own secret store), never written into `/run.json` in the clear.
   Environment variable naming: `HIVED_RUN_ID`, `HIVED_KEEPER_ADDR`,
   `HIVED_IDENTITY_TOKEN_REF`, `HIVED_MODEL_GATEWAY_ADDR`,
-  `HIVED_TOOL_BROKER_ADDR`, `HIVED_MIND_ADDR` — the Drone reads these to
+  `HIVED_TOOL_BROKER_ADDR`, `HIVED_MIND_ADDR`. The Drone reads these to
   bootstrap; user code never sees them directly (it talks to the Drone's
   local IPC endpoint instead, per `docs/PROJECT.md` §8).
 - **Log and status retrieval.** The Executor exposes `Logs` (streaming)
@@ -46,7 +47,7 @@ Executor (M2) are built against the same assumptions from the start.
 - **Egress policy.** The Cell is **deny-by-default**. The allowlist the
   Executor enforces is derived from the effective Colony + AgentVersion
   `spec.tools` policy, resolved by the Keeper and passed to `Provision`.
-  Enforcement is entirely the Executor's/vibeD's responsibility — **never
+  Enforcement is entirely the Executor's/vibeD's responsibility, **never
   the Drone's** (restates the Keeper/Drone split from ADR-0001; the Drone
   has no egress-enforcement code path, by construction).
 - **Timeout semantics.** Three distinct timers: Run-level wall clock
@@ -57,7 +58,7 @@ Executor (M2) are built against the same assumptions from the start.
 - **Warm pool expectations.** The Executor may reuse a warm Cell shell
   (network setup, base filesystem) across Runs for latency, but the
   identity token, `/run.json`, and `/app` must always be freshly injected
-  per Run — nothing Run-specific may be warm-pooled.
+  per Run. Nothing Run-specific may be warm-pooled.
 
 ## Consequences
 
@@ -66,7 +67,7 @@ Executor (M2) are built against the same assumptions from the start.
   break.
 - Because egress enforcement lives entirely in the Executor, a
   `local-docker` or `process` Executor (M1) that doesn't implement egress
-  control is explicitly **not** a security boundary — this must be
+  control is explicitly **not** a security boundary. This must be
   documented wherever those Executors are used for anything beyond local
   dev.
 - The env-var contract above becomes the first thing M1's Drone

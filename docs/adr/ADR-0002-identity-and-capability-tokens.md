@@ -1,7 +1,7 @@
 # ADR-0002: Identity and capability tokens
 
 ## Status
-Draft — wire format frozen here for M1's issuer and mindD client to agree
+Draft. Wire format frozen here for M1's issuer and mindD client to agree
 on; no issuance ships in M0 (`internal/identity` is a no-op stub).
 
 ## Context
@@ -20,8 +20,8 @@ build in M1.
 
 - **Token format: PASETO v4.public** for both Run identity tokens and
   mindD capability tokens. `v4.public` (asymmetric, Ed25519) rather than
-  `v4.local` (symmetric) so that every verifier — the Drone, mindD, the
-  Tool Broker — only needs the Keeper's **public** key, never a shared
+  `v4.local` (symmetric) so that every verifier (the Drone, mindD, the
+  Tool Broker) only needs the Keeper's **public** key, never a shared
   secret. This is also format-compatible with mindD's existing token
   story: mindD already verifies PASETO v4 tokens against a configured
   public key (see ADR-0004), so no new verification machinery is needed
@@ -32,7 +32,7 @@ build in M1.
   `hive`, `colony`, `agent`, `agentVersion`, `run`, `session`,
   `parentRun`. `iss` is always `"hived-keeper"`. `exp` is mandatory and
   short (target: single-digit minutes to low hours depending on Run
-  wall-clock limits, tuned in M1 — not decided here).
+  wall-clock limits, tuned in M1; not decided here).
 - **Key rotation**: each signing key is identified by a `kid` carried in
   the PASETO footer. The Keeper publishes the current key set (a
   JWKS-equivalent list of active public keys by `kid`) so verifiers can
@@ -42,7 +42,7 @@ build in M1.
   Keeper-side operation; verifiers never need to restart to pick up a new
   key, only to refresh their cached key set.
 - **M0 boundary**: `internal/identity/` ships only an interface and a
-  `NotImplemented` stub — no signing key is generated, no token is
+  `NotImplemented` stub. No signing key is generated, no token is
   issued, and the API's stub auth interceptor (see `internal/api`)
   accepts any bearer value in M0. This ADR fixes the shape so that when
   M1 implements real issuance, nothing downstream (Drone, mindD client)
@@ -52,12 +52,12 @@ build in M1.
 
 - The M0 proto's `Run.status.identity` field exists and is typed as an
   opaque string (the eventual token), even though nothing populates it
-  meaningfully yet — this avoids a breaking proto change when M1 wires up
+  meaningfully yet. This avoids a breaking proto change when M1 wires up
   real issuance.
 - Because verification only needs a public key, the Tool Broker and
   future mindD client can verify tokens locally without calling back into
-  the Keeper on every request — important for latency once the general
-  lane is in play.
+  the Keeper on every request, which is important for latency once the
+  general lane is in play.
 - An M0 Keeper is **not safe to expose on an untrusted network**: the
   stub auth interceptor accepts anything. This is called out in
   `SECURITY.md` and must not be missed when M1 lands real issuance.

@@ -1,0 +1,25 @@
+/**
+ * Theme overrides for hiveD.
+ */
+:root {
+  --ifm-color-primary: #b8860b;
+  --ifm-color-primary-dark: #a67a0a;
+  --ifm-color-primary-darker: #9c7309;
+  --ifm-color-primary-darkest: #815f08;
+  --ifm-color-primary-light: #ca920c;
+  --ifm-color-primary-lighter: #d49a10;
+  --ifm-color-primary-lightest: #e0ab2c;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #e0ab2c;
+  --ifm-color-primary-dark: #d49a10;
+  --ifm-color-primary-darker: #ca920c;
+  --ifm-color-primary-darkest: #a67a0a;
+  --ifm-color-primary-light: #e5b74c;
+  --ifm-color-primary-lighter: #e9bf5e;
+  --ifm-color-primary-lightest: #f0d391;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.1);
+}

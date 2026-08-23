@@ -3,7 +3,7 @@
 ## Status
 Draft. Decision (a) below applies starting M1 regardless of whether the
 proposal in Decision (b) is accepted. No mindD Go client code and no real
-mindD integration ships in M0 — `deploy/compose` includes mindD only as a
+mindD integration ships in M0. `deploy/compose` includes mindD only as a
 profile-gated placeholder service, not a live integration.
 
 ## Context
@@ -16,7 +16,7 @@ token to a hierarchical path like `colony/<c>/agent/<a>/run/<r>` and
 - mindD's PASETO v4 capability scope (`internal/auth`, `IssuePASETO`) is
   `{tenant string (required), agent string (optional), namespaces
   []string (glob patterns), ops []string}`. There is **no client-driven,
-  hierarchical path concept** — a token scopes to a flat `tenant` string
+  hierarchical path concept**. A token scopes to a flat `tenant` string
   plus glob-matched namespace patterns (e.g. `kv/scratchpad`,
   `kv/tool-*`), not to an arbitrary nested path a caller supplies.
 - Namespaces themselves are **admin-predeclared** in mindD's server
@@ -28,7 +28,7 @@ token to a hierarchical path like `colony/<c>/agent/<a>/run/<r>` and
   (`github.com/vibed-project/mindD/gen/mindd/{kv,episodic,semantic,artifact,lease}/v1`).
   A hiveD Go client would need to either import those generated packages
   directly (which the import-boundary check in `scripts/check-import-boundary.sh`
-  currently forbids by design — see ADR-0001) or hand-write its own thin
+  currently forbids by design; see ADR-0001) or hand-write its own thin
   gRPC/connect client against mindD's public proto.
 - FYI, not a discrepancy to resolve: mindD has a sixth block, `graph`,
   that `docs/PROJECT.md` §9 doesn't mention. hiveD ignores `graph` for
@@ -68,7 +68,7 @@ maps its model onto mindD's existing flat one as follows:
   and write sibling Runs' memory within the same colony (and agent, if
   the `agent` claim is used), because mindD has no way to scope a token
   to a single run's keys. This is a real, accepted gap until (b) lands or
-  an equivalent mechanism is built. It must stay visible — do not let a
+  an equivalent mechanism is built. It must stay visible. Do not let a
   later implementation quietly treat the `run/<runID>/` prefix as if it
   were a security boundary.
 
@@ -81,14 +81,14 @@ maps its model onto mindD's existing flat one as follows:
 ### (b) Cross-repository feature request
 
 hiveD will file a feature proposal against mindD requesting
-client-driven, hierarchical/dynamic namespace-pattern support — the
+client-driven, hierarchical/dynamic namespace-pattern support: the
 capability that would let a token be scoped to something like a specific
 run's keys rather than only to predeclared, admin-configured namespace
 globs.
 
-**The proposal must be worded generically** — e.g. "support for
+**The proposal must be worded generically** (e.g. "support for
 hierarchical capability scoping for multi-tenant, multi-agent-orchestration
-use cases" — **and must not name hiveD** if mindD's issue tracker is
+use cases") **and must not name hiveD** if mindD's issue tracker is
 public. This mirrors the discipline already established elsewhere in this
 workspace, where the public vibeD repository never references its private
 sibling projects by name; the same boundary applies here in reverse (a
@@ -112,16 +112,16 @@ Status when mindD's maintainers respond.
 - No mindD Go client code and no real mindD integration ships in M0. The
   M0 `deploy/compose` includes a mindD service definition gated behind
   the `mind` compose profile, documented but not started by default (see
-  the docker-compose plan) — it exists as a placeholder for M1, not a
+  the docker-compose plan). It exists as a placeholder for M1, not a
   working integration.
 - M1's mindD client will be hand-written against mindD's public
   connect-go stubs (imported as a separate dependency, not via
   `github.com/vibed-project/mindD/gen/...` inside mindD's own module tree) or generated from
-  mindD's published proto, whichever is cleaner once M1 scopes that work
-  — this ADR does not decide that mechanism, only the claim/path mapping.
+  mindD's published proto, whichever is cleaner once M1 scopes that work.
+  This ADR does not decide that mechanism, only the claim/path mapping.
 - The `run/<runID>/` key-prefix convention is designed so the **key
   layout survives unchanged** if/when mindD adds real hierarchical
-  scoping — only the auth boundary tightens, from "colony+agent" to
+  scoping. Only the auth boundary tightens, from "colony+agent" to
   "colony+agent+run". No data migration should be needed at that point.
 - If mindD's maintainers accept the proposal and hierarchical scoping
   ships, this ADR is superseded by a new ADR documenting the tightened
@@ -137,7 +137,7 @@ Status when mindD's maintainers respond.
 - **Encode `run` into the `tenant` claim instead of a key prefix** (e.g.
   `tenant = "<colony>.<agent>.<run>"`). Rejected: this would create a new
   predeclared-namespace-and-tenant combination per Run, which doesn't fit
-  mindD's admin-predeclared namespace model at all — namespaces aren't
+  mindD's admin-predeclared namespace model at all. Namespaces aren't
   meant to be created dynamically per Run, and tenant churn at Run
   granularity would be operationally worse than the accepted interim
   isolation gap.
