@@ -36,6 +36,12 @@ func setupPostgres(t *testing.T) *pgxpool.Pool {
 	}
 	defer db.Close()
 	if err := db.PingContext(ctx); err != nil {
+		// `make test-integration` sets HIVED_REQUIRE_PG=1. Without it a
+		// developer running `go test -tags=integration` by hand still gets a
+		// skip, but the documented command can never report a false green.
+		if os.Getenv("HIVED_REQUIRE_PG") != "" {
+			t.Fatalf("postgres required but not reachable at %s: %v", dsn, err)
+		}
 		t.Skipf("postgres not reachable at %s (run `make compose-up` first): %v", dsn, err)
 	}
 	if err := Migrate(db, "up"); err != nil {
@@ -54,6 +60,13 @@ func truncate(t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
 	if _, err := pool.Exec(context.Background(), `TRUNCATE resources, events`); err != nil {
 		t.Fatalf("truncate: %v", err)
+	}
+	// Reset the resource_version counter as well: several conformance cases
+	// depend on starting from a genuinely empty store (the first resource
+	// ever created used to be invisible to a list-then-watch client).
+	if _, err := pool.Exec(context.Background(),
+		`UPDATE hived_resource_version_counter SET value = 0`); err != nil {
+		t.Fatalf("reset resource version counter: %v", err)
 	}
 }
 

@@ -9,6 +9,44 @@ hiveD is pre-1.0; no version has been tagged yet.
 
 ### Fixed
 
+- Concurrent `Append` to the same Run silently dropped most events. `seq` was
+  assigned with an unserialized `MAX(seq)+1`, so concurrent appenders computed
+  the same value and `UNIQUE (colony, run, seq)` rejected all but one, with no
+  retry. Measured before the fix: 200 concurrent appends, 78 persisted. Appends
+  now take a transaction-scoped advisory lock keyed on (colony, run); appends to
+  different Runs never contend.
+- `List` pagination silently skipped rows. The keyset cursor was `name` alone,
+  but name is unique only per `(kind, colony)`, so same-named resources in later
+  colonies were never returned: three Agents named `bot` in three colonies
+  paginated down to one. The cursor is now `(colony, name)` and page tokens are
+  opaque.
+- `resource_version` is now allocated from a transactional counter rather than a
+  sequence. `nextval()` is non-transactional, so version order did not have to
+  match commit order and a watcher could advance its cursor past a row that had
+  not committed yet, losing it permanently. Relatedly, on a fresh database the
+  `List` watermark equalled the version the first resource would receive, so the
+  documented List-then-Watch handoff never delivered the first resource in a
+  hive.
+- `PageSize` of `MaxInt32` overflowed to a negative `LIMIT` and returned a raw
+  Postgres error; no upper bound existed at all, so one request could ask the
+  Keeper to load every row into memory. Page size is now clamped to
+  `MaxPageSize` (1000), and a malformed page token is reported as
+  `InvalidArgument` rather than `Internal`.
+- `Append` discarded a caller-supplied event timestamp: `ts` was omitted from
+  the INSERT column list, so every event silently took ingestion time.
+- Re-applying an identical manifest advanced `resource_version` (twice), waking
+  every watcher. A controller that reconciles on its own watch was a
+  self-sustaining hot loop. Only a real spec/labels/annotations change now
+  advances it, in both stores.
+- `make test-integration` reported `ok` while running nothing: the toolchain
+  container had no host network, so it could not reach a Postgres published on
+  the host and every Postgres test skipped. The container now allows host
+  loopback, and `HIVED_REQUIRE_PG` (set by that target and by CI) turns an
+  unreachable Postgres into a failure instead of a skip.
+- `MemoryStore` ignored `PageSize`/`PageToken` entirely, so no handler-level or
+  conformance test could exercise pagination — which is why the cursor bug
+  shipped. It now paginates identically to `PostgresStore`.
+
 - Module path is now `github.com/vibed-project/hiveD`, matching the repository.
   It previously declared `github.com/hived-project/hived`, an org that does not
   exist, so `go get` and `go install` failed for every user by both paths.
